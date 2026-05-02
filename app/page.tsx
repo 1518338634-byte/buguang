@@ -79,12 +79,19 @@ const sampleIdeas: IdeaCard[] = [
   }
 ];
 
-const navItems = [
-  { icon: LayoutGrid, label: "画板", sub: "CANVAS", active: true },
-  { icon: List, label: "全部灵感", sub: "ALL IDEAS" },
-  { icon: Star, label: "收藏夹", sub: "FAVOURITES" },
-  { icon: Tag, label: "标签库", sub: "TAGS" },
-  { icon: Settings, label: "设置", sub: "SETTINGS" }
+type ViewMode = "canvas" | "all" | "favorites" | "tags" | "settings";
+
+const navItems: Array<{
+  id: ViewMode;
+  icon: typeof LayoutGrid;
+  label: string;
+  sub: string;
+}> = [
+  { id: "canvas", icon: LayoutGrid, label: "画板", sub: "CANVAS" },
+  { id: "all", icon: List, label: "全部灵感", sub: "ALL IDEAS" },
+  { id: "favorites", icon: Star, label: "收藏夹", sub: "FAVOURITES" },
+  { id: "tags", icon: Tag, label: "标签库", sub: "TAGS" },
+  { id: "settings", icon: Settings, label: "设置", sub: "SETTINGS" }
 ];
 
 const priorityLevels: Array<{
@@ -131,13 +138,32 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [editingIdea, setEditingIdea] = useState<IdeaCard | null>(null);
+  const [selectedView, setSelectedView] = useState<ViewMode>("canvas");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const libraryRef = useRef<HTMLElement | null>(null);
 
   const loadingText = useTimedMessage(isIncubating);
   const allTags = useMemo(() => new Set(ideas.flatMap((idea) => idea.tags)), [ideas]);
+  const favoriteIdeas = useMemo(
+    () => ideas.filter((idea) => idea.priority === "P0" || idea.priority === "P1"),
+    [ideas]
+  );
+  const tagStats = useMemo(
+    () =>
+      Array.from(allTags)
+        .map((tag) => ({
+          tag,
+          count: ideas.filter((idea) => idea.tags.includes(tag)).length,
+          ideas: ideas.filter((idea) => idea.tags.includes(tag))
+        }))
+        .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag)),
+    [allTags, ideas]
+  );
+  const viewMeta = getViewMeta(selectedView);
+  const visibleIdeas = selectedView === "favorites" ? favoriteIdeas : ideas;
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -206,6 +232,13 @@ export default function Home() {
   function saveIdeaEdits(updatedIdea: IdeaCard) {
     setIdeas((current) => current.map((idea) => (idea.id === updatedIdea.id ? updatedIdea : idea)));
     setEditingIdea(null);
+  }
+
+  function handleNavClick(view: ViewMode) {
+    setSelectedView(view);
+    window.setTimeout(() => {
+      libraryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
   }
 
   function handleVoiceInput() {
@@ -293,7 +326,8 @@ export default function Home() {
                 <button
                   key={item.label}
                   type="button"
-                  className={`pixel-nav w-full ${item.active ? "is-active" : ""}`}
+                  onClick={() => handleNavClick(item.id)}
+                  className={`pixel-nav w-full ${selectedView === item.id ? "is-active" : ""}`}
                 >
                   <item.icon className="h-6 w-6" />
                   <span>
@@ -317,7 +351,7 @@ export default function Home() {
               <StatLine label="总灵感" value={ideas.length} />
               <StatLine label="本周新增" value={Math.min(ideas.length, 5)} />
               <StatLine label="标签数" value={allTags.size} />
-              <StatLine label="收藏数" value={3} />
+              <StatLine label="收藏数" value={favoriteIdeas.length} />
             </div>
 
             <div className="pixel-chart">
@@ -411,14 +445,14 @@ export default function Home() {
             </section>
           )}
 
-          <section>
+          <section ref={libraryRef}>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-end gap-4">
-                <h2 className="text-2xl font-bold text-white sm:text-3xl">灵感画板</h2>
-                <span className="font-mono text-xs uppercase tracking-[0.16em] text-[#8f8877]">Idea Canvas</span>
+                <h2 className="text-2xl font-bold text-white sm:text-3xl">{viewMeta.title}</h2>
+                <span className="font-mono text-xs uppercase tracking-[0.16em] text-[#8f8877]">{viewMeta.sub}</span>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className={`flex items-center gap-3 ${selectedView === "tags" || selectedView === "settings" ? "hidden sm:flex" : ""}`}>
                 <div className="pixel-toggle">
                   <button className="is-active" type="button" aria-label="网格视图" title="网格视图">
                     <Grid3X3 className="h-5 w-5" />
@@ -434,9 +468,19 @@ export default function Home() {
               </div>
             </div>
 
-            {ideas.length ? (
+            {selectedView === "tags" ? (
+              <TagLibrary
+                tagStats={tagStats}
+                copiedId={copiedId}
+                onCopy={handleCopy}
+                onEdit={setEditingIdea}
+                onSetPriority={updateIdeaPriority}
+              />
+            ) : selectedView === "settings" ? (
+              <SettingsLibrary ideas={ideas} tagCount={allTags.size} favoriteCount={favoriteIdeas.length} />
+            ) : visibleIdeas.length ? (
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {ideas.map((idea) => (
+                {visibleIdeas.map((idea) => (
                   <IdeaCardView
                     key={idea.id}
                     idea={idea}
@@ -451,8 +495,8 @@ export default function Home() {
               <div className="pixel-empty grid min-h-72 place-items-center p-8 text-center">
                 <div>
                   <Sparkles className="mx-auto mb-4 h-10 w-10 text-[#ffd95a]" />
-                  <p className="text-xl text-white">画板已清空</p>
-                  <p className="mt-2 text-sm text-[#aaa391]">输入一个想法，让 FlowState 重新点亮星图。</p>
+                  <p className="text-xl text-white">{viewMeta.emptyTitle}</p>
+                  <p className="mt-2 text-sm text-[#aaa391]">{viewMeta.emptyCopy}</p>
                 </div>
               </div>
             )}
@@ -473,6 +517,156 @@ export default function Home() {
         />
       ) : null}
     </main>
+  );
+}
+
+function getViewMeta(view: ViewMode) {
+  const meta: Record<
+    ViewMode,
+    {
+      title: string;
+      sub: string;
+      emptyTitle: string;
+      emptyCopy: string;
+    }
+  > = {
+    canvas: {
+      title: "灵感画板",
+      sub: "Idea Canvas",
+      emptyTitle: "画板已清空",
+      emptyCopy: "输入一个想法，让 FlowState 重新点亮星图。"
+    },
+    all: {
+      title: "全部灵感库",
+      sub: "All Ideas",
+      emptyTitle: "灵感库还没有内容",
+      emptyCopy: "先在画板里孵化第一张灵感卡片。"
+    },
+    favorites: {
+      title: "收藏夹",
+      sub: "Priority Library",
+      emptyTitle: "收藏夹还没有重点灵感",
+      emptyCopy: "把灵感标记为 P0 或 P1，它们会自动进入这里。"
+    },
+    tags: {
+      title: "标签库",
+      sub: "Tag Library",
+      emptyTitle: "还没有标签",
+      emptyCopy: "生成或编辑卡片后，标签会自动汇总到这里。"
+    },
+    settings: {
+      title: "设置",
+      sub: "Settings",
+      emptyTitle: "设置",
+      emptyCopy: "管理 FlowState 的本地体验。"
+    }
+  };
+
+  return meta[view];
+}
+
+function TagLibrary({
+  tagStats,
+  copiedId,
+  onCopy,
+  onEdit,
+  onSetPriority
+}: {
+  tagStats: Array<{ tag: string; count: number; ideas: IdeaCard[] }>;
+  copiedId: string | null;
+  onCopy: (idea: IdeaCard) => void;
+  onEdit: (idea: IdeaCard) => void;
+  onSetPriority: (id: string, priority: PriorityLevel) => void;
+}) {
+  if (!tagStats.length) {
+    return (
+      <div className="pixel-empty grid min-h-72 place-items-center p-8 text-center">
+        <div>
+          <Tag className="mx-auto mb-4 h-10 w-10 text-[#ffd95a]" />
+          <p className="text-xl text-white">标签库还是空的</p>
+          <p className="mt-2 text-sm text-[#aaa391]">生成灵感或编辑标签后，这里会自动归档。</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="tag-library-grid">
+        {tagStats.map((item) => (
+          <section key={item.tag} className="library-mini-card">
+            <div>
+              <p className="text-lg font-bold text-white">#{item.tag}</p>
+              <p className="mt-1 font-mono text-xs text-[#9f9988]">{item.count} IDEAS</p>
+            </div>
+            <span className="tag-orbit" />
+          </section>
+        ))}
+      </div>
+
+      {tagStats.map((item) => (
+        <section key={item.tag} className="tag-section">
+          <div className="mb-3 flex items-center gap-3">
+            <h3 className="text-xl font-bold text-white">#{item.tag}</h3>
+            <span className="font-mono text-xs text-[#8f8877]">{item.count} 张卡片</span>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {item.ideas.map((idea) => (
+              <IdeaCardView
+                key={`${item.tag}-${idea.id}`}
+                idea={idea}
+                copied={copiedId === idea.id}
+                onCopy={() => onCopy(idea)}
+                onEdit={() => onEdit(idea)}
+                onSetPriority={(priority) => onSetPriority(idea.id, priority)}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function SettingsLibrary({
+  ideas,
+  tagCount,
+  favoriteCount
+}: {
+  ideas: IdeaCard[];
+  tagCount: number;
+  favoriteCount: number;
+}) {
+  const priorityCounts = priorityLevels.map((priority) => ({
+    ...priority,
+    count: ideas.filter((idea) => idea.priority === priority.level).length
+  }));
+
+  return (
+    <div className="settings-library">
+      <section className="library-mini-card">
+        <div>
+          <p className="text-lg font-bold text-white">本地存储</p>
+          <p className="mt-1 text-sm text-[#bdb59d]">灵感卡片保存在当前浏览器的 localStorage。</p>
+        </div>
+      </section>
+
+      <section className="settings-metrics">
+        <StatLine label="总灵感" value={ideas.length} />
+        <StatLine label="标签数" value={tagCount} />
+        <StatLine label="重点灵感" value={favoriteCount} />
+      </section>
+
+      <section className="priority-summary">
+        {priorityCounts.map((priority) => (
+          <div key={priority.level} className={`priority-summary-item priority-${priority.level.toLowerCase()}`}>
+            <span>{priority.level}</span>
+            <strong>{priority.count}</strong>
+            <small>{priority.description}</small>
+          </div>
+        ))}
+      </section>
+    </div>
   );
 }
 
