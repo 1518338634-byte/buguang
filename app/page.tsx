@@ -311,7 +311,7 @@ export default function Home() {
       <div className="relative z-10 grid min-h-screen grid-cols-1 gap-5 px-4 py-5 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-6">
         <aside className="pixel-panel flex flex-col justify-between p-5 lg:min-h-[calc(100vh-40px)]">
           <div>
-            <div className="mb-9 flex items-center gap-3">
+            <div className="side-brand mb-9 flex items-center gap-3">
               <div className="pixel-sigil grid h-12 w-12 place-items-center text-[#ffd95a]">
                 <Sparkles className="h-8 w-8" />
               </div>
@@ -321,7 +321,7 @@ export default function Home() {
               </div>
             </div>
 
-            <nav className="space-y-2">
+            <nav className="side-nav space-y-2">
               {navItems.map((item) => (
                 <button
                   key={item.label}
@@ -340,7 +340,7 @@ export default function Home() {
           </div>
 
           <div className="space-y-5">
-            <div className="pixel-box p-4">
+            <div className="side-stats pixel-box p-4">
               <div className="mb-4 flex items-start justify-between">
                 <div>
                   <p className="text-base text-white">灵感统计</p>
@@ -722,7 +722,7 @@ function IdeaCardView({
           ))}
         </ul>
 
-        <div className="mt-5 grid grid-cols-[44px_1fr_112px] gap-3">
+        <div className="card-actions-grid mt-5 grid grid-cols-[44px_1fr_112px] gap-3">
           <button className="card-action" type="button" onClick={onEdit} aria-label="编辑灵感" title="编辑灵感">
             <Edit3 className="h-5 w-5" />
           </button>
