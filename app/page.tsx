@@ -3,9 +3,12 @@
 import {
   Bot,
   Check,
+  CheckCircle2,
   Clipboard,
+  Crown,
   Edit3,
-  Grid3X3,
+  Eye,
+  Gift,
   LayoutGrid,
   Lightbulb,
   List,
@@ -19,10 +22,18 @@ import {
   Star,
   Sun,
   Tag,
-  Trash2
+  Trash2,
+  X
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { IdeaCard, PriorityLevel, formatIdeaMarkdown, incubateIdea } from "@/lib/ideas";
+import {
+  IdeaCard,
+  InspirationPet,
+  PriorityLevel,
+  formatIdeaMarkdown,
+  generateInspirationPet,
+  incubateIdea
+} from "@/lib/ideas";
 
 const STORAGE_KEY = "flowstate.idea-canvas.v1";
 const MAX_LENGTH = 500;
@@ -93,7 +104,7 @@ const sampleIdeas: IdeaCard[] = [
   }
 ];
 
-type ViewMode = "canvas" | "all" | "favorites" | "tags" | "settings";
+type ViewMode = "canvas" | "all" | "favorites" | "tags" | "prizes" | "settings";
 
 const navItems: Array<{
   id: ViewMode;
@@ -105,6 +116,7 @@ const navItems: Array<{
   { id: "all", icon: List, label: "全部灵感", sub: "ALL IDEAS" },
   { id: "favorites", icon: Star, label: "收藏夹", sub: "FAVOURITES" },
   { id: "tags", icon: Tag, label: "标签库", sub: "TAGS" },
+  { id: "prizes", icon: Gift, label: "灵感奖池", sub: "PRIZE POOL" },
   { id: "settings", icon: Settings, label: "设置", sub: "SETTINGS" }
 ];
 
@@ -152,6 +164,8 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [editingIdea, setEditingIdea] = useState<IdeaCard | null>(null);
+  const [focusedIdeaId, setFocusedIdeaId] = useState<string | null>(null);
+  const [newRewardPet, setNewRewardPet] = useState<InspirationPet | null>(null);
   const [selectedView, setSelectedView] = useState<ViewMode>("canvas");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -161,6 +175,21 @@ export default function Home() {
 
   const loadingText = useTimedMessage(isIncubating);
   const allTags = useMemo(() => new Set(ideas.flatMap((idea) => idea.tags)), [ideas]);
+  const focusedIdea = useMemo(
+    () => ideas.find((idea) => idea.id === focusedIdeaId) || null,
+    [focusedIdeaId, ideas]
+  );
+  const rewardedIdeas = useMemo(
+    () =>
+      ideas
+        .filter((idea) => idea.reward_pet)
+        .sort(
+          (a, b) =>
+            new Date(b.reward_pet?.awarded_at || b.completed_at || b.created_at).getTime() -
+            new Date(a.reward_pet?.awarded_at || a.completed_at || a.created_at).getTime()
+        ),
+    [ideas]
+  );
   const favoriteIdeas = useMemo(
     () => ideas.filter((idea) => idea.priority === "P0" || idea.priority === "P1"),
     [ideas]
@@ -236,6 +265,8 @@ export default function Home() {
 
   function clearCanvas() {
     setIdeas([]);
+    setFocusedIdeaId(null);
+    setNewRewardPet(null);
     setError("");
   }
 
@@ -246,6 +277,25 @@ export default function Home() {
   function saveIdeaEdits(updatedIdea: IdeaCard) {
     setIdeas((current) => current.map((idea) => (idea.id === updatedIdea.id ? updatedIdea : idea)));
     setEditingIdea(null);
+  }
+
+  function completeIdea(id: string) {
+    const target = ideas.find((idea) => idea.id === id);
+    if (!target) return;
+
+    const reward = target.reward_pet || generateInspirationPet(target);
+    setIdeas((current) =>
+      current.map((idea) =>
+        idea.id === id
+          ? {
+              ...idea,
+              completed_at: idea.completed_at || new Date().toISOString(),
+              reward_pet: reward
+            }
+          : idea
+      )
+    );
+    setNewRewardPet(reward);
   }
 
   function handleNavClick(view: ViewMode) {
@@ -366,10 +416,11 @@ export default function Home() {
               <StatLine label="本周新增" value={Math.min(ideas.length, 5)} />
               <StatLine label="标签数" value={allTags.size} />
               <StatLine label="收藏数" value={favoriteIdeas.length} />
+              <StatLine label="奖池数" value={rewardedIdeas.length} />
             </div>
 
             <div className="pixel-chart">
-              <p className="font-mono text-xs uppercase text-[#e8c75d]">Ideas flow like stars.</p>
+              <p className="font-mono text-xs uppercase text-[#e8c75d]">Focus. Finish. Hatch.</p>
               <div className="chart-mountains" />
             </div>
           </div>
@@ -466,19 +517,15 @@ export default function Home() {
                 <span className="font-mono text-xs uppercase tracking-[0.16em] text-[#8f8877]">{viewMeta.sub}</span>
               </div>
 
-              <div className={`flex items-center gap-3 ${selectedView === "tags" || selectedView === "settings" ? "hidden sm:flex" : ""}`}>
-                <div className="pixel-toggle">
-                  <button className="is-active" type="button" aria-label="网格视图" title="网格视图">
-                    <Grid3X3 className="h-5 w-5" />
-                  </button>
-                  <button type="button" aria-label="列表视图" title="列表视图">
-                    <List className="h-5 w-5" />
-                  </button>
-                </div>
-                <button className="pixel-select" type="button">
-                  最新创建
-                  <span>⌄</span>
-                </button>
+              <div className="canvas-meter-row">
+                <span>
+                  <Crown className="h-4 w-4" />
+                  重点 {favoriteIdeas.length}
+                </span>
+                <span>
+                  <Gift className="h-4 w-4" />
+                  奖池 {rewardedIdeas.length}
+                </span>
               </div>
             </div>
 
@@ -488,12 +535,20 @@ export default function Home() {
                 copiedId={copiedId}
                 onCopy={handleCopy}
                 onEdit={setEditingIdea}
+                onOpen={(idea) => setFocusedIdeaId(idea.id)}
                 onSetPriority={updateIdeaPriority}
               />
+            ) : selectedView === "prizes" ? (
+              <PrizePool rewardedIdeas={rewardedIdeas} onOpen={(idea) => setFocusedIdeaId(idea.id)} />
             ) : selectedView === "settings" ? (
-              <SettingsLibrary ideas={ideas} tagCount={allTags.size} favoriteCount={favoriteIdeas.length} />
+              <SettingsLibrary
+                ideas={ideas}
+                tagCount={allTags.size}
+                favoriteCount={favoriteIdeas.length}
+                rewardCount={rewardedIdeas.length}
+              />
             ) : visibleIdeas.length ? (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              <div className="idea-grid-compact">
                 {visibleIdeas.map((idea) => (
                   <IdeaCardView
                     key={idea.id}
@@ -501,6 +556,7 @@ export default function Home() {
                     copied={copiedId === idea.id}
                     onCopy={() => handleCopy(idea)}
                     onEdit={() => setEditingIdea(idea)}
+                    onOpen={() => setFocusedIdeaId(idea.id)}
                     onSetPriority={(priority) => updateIdeaPriority(idea.id, priority)}
                   />
                 ))}
@@ -529,6 +585,25 @@ export default function Home() {
           onClose={() => setEditingIdea(null)}
           onSave={saveIdeaEdits}
         />
+      ) : null}
+
+      {focusedIdea ? (
+        <IdeaDetail
+          idea={focusedIdea}
+          copied={copiedId === focusedIdea.id}
+          onClose={() => setFocusedIdeaId(null)}
+          onCopy={() => handleCopy(focusedIdea)}
+          onEdit={() => {
+            setEditingIdea(focusedIdea);
+            setFocusedIdeaId(null);
+          }}
+          onComplete={() => completeIdea(focusedIdea.id)}
+          onSetPriority={(priority) => updateIdeaPriority(focusedIdea.id, priority)}
+        />
+      ) : null}
+
+      {newRewardPet ? (
+        <RewardReveal pet={newRewardPet} onClose={() => setNewRewardPet(null)} />
       ) : null}
     </main>
   );
@@ -568,6 +643,12 @@ function getViewMeta(view: ViewMode) {
       emptyTitle: "还没有标签",
       emptyCopy: "生成或编辑卡片后，标签会自动汇总到这里。"
     },
+    prizes: {
+      title: "灵感奖池",
+      sub: "Prize Pool",
+      emptyTitle: "奖池还没有小宠物",
+      emptyCopy: "进入某个灵感并完成项目，就能孵化一个随机奖励。"
+    },
     settings: {
       title: "设置",
       sub: "Settings",
@@ -584,12 +665,14 @@ function TagLibrary({
   copiedId,
   onCopy,
   onEdit,
+  onOpen,
   onSetPriority
 }: {
   tagStats: Array<{ tag: string; count: number; ideas: IdeaCard[] }>;
   copiedId: string | null;
   onCopy: (idea: IdeaCard) => void;
   onEdit: (idea: IdeaCard) => void;
+  onOpen: (idea: IdeaCard) => void;
   onSetPriority: (id: string, priority: PriorityLevel) => void;
 }) {
   if (!tagStats.length) {
@@ -624,7 +707,7 @@ function TagLibrary({
             <h3 className="text-xl font-bold text-white">#{item.tag}</h3>
             <span className="font-mono text-xs text-[#8f8877]">{item.count} 张卡片</span>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="idea-grid-compact">
             {item.ideas.map((idea) => (
               <IdeaCardView
                 key={`${item.tag}-${idea.id}`}
@@ -632,6 +715,7 @@ function TagLibrary({
                 copied={copiedId === idea.id}
                 onCopy={() => onCopy(idea)}
                 onEdit={() => onEdit(idea)}
+                onOpen={() => onOpen(idea)}
                 onSetPriority={(priority) => onSetPriority(idea.id, priority)}
               />
             ))}
@@ -645,11 +729,13 @@ function TagLibrary({
 function SettingsLibrary({
   ideas,
   tagCount,
-  favoriteCount
+  favoriteCount,
+  rewardCount
 }: {
   ideas: IdeaCard[];
   tagCount: number;
   favoriteCount: number;
+  rewardCount: number;
 }) {
   const priorityCounts = priorityLevels.map((priority) => ({
     ...priority,
@@ -669,6 +755,7 @@ function SettingsLibrary({
         <StatLine label="总灵感" value={ideas.length} />
         <StatLine label="标签数" value={tagCount} />
         <StatLine label="重点灵感" value={favoriteCount} />
+        <StatLine label="灵感奖池" value={rewardCount} />
       </section>
 
       <section className="priority-summary">
@@ -684,28 +771,85 @@ function SettingsLibrary({
   );
 }
 
+function PrizePool({
+  rewardedIdeas,
+  onOpen
+}: {
+  rewardedIdeas: IdeaCard[];
+  onOpen: (idea: IdeaCard) => void;
+}) {
+  if (!rewardedIdeas.length) {
+    return (
+      <div className="pixel-empty prize-empty grid min-h-72 place-items-center p-8 text-center">
+        <div>
+          <Gift className="mx-auto mb-4 h-10 w-10 text-[#ffd95a]" />
+          <p className="text-xl text-white">奖池等待第一次孵化</p>
+          <p className="mt-2 text-sm text-[#aaa391]">打开一张灵感卡片，完成项目后会获得随机灵感小宠物。</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="prize-grid">
+      {rewardedIdeas.map((idea) => {
+        const pet = idea.reward_pet;
+        if (!pet) return null;
+
+        return (
+          <button key={pet.id} type="button" className="pet-card" onClick={() => onOpen(idea)}>
+            <PetSprite pet={pet} />
+            <div className="min-w-0">
+              <p className="pet-card-name">{pet.name}</p>
+              <p className="pet-card-species">{pet.species}</p>
+              <p className="pet-card-source">来自：{idea.title}</p>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function IdeaCardView({
   idea,
   copied,
   onCopy,
   onEdit,
+  onOpen,
   onSetPriority
 }: {
   idea: IdeaCard;
   copied: boolean;
   onCopy: () => void;
   onEdit: () => void;
+  onOpen: () => void;
   onSetPriority: (priority: PriorityLevel) => void;
 }) {
   const [priorityOpen, setPriorityOpen] = useState(false);
   const evaluation = getIdeaEvaluation(idea);
-  const landingWay = getIdeaLandingWay(idea);
-  const expansionIdeas = getIdeaExpansionIdeas(idea);
+  const focusValue = getFocusValue(idea.priority);
+
+  function handleCardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpen();
+    }
+  }
 
   return (
-    <article className="idea-card group flex min-h-[480px] flex-col justify-between p-4">
+    <article
+      className={`idea-card compact-card group ${idea.completed_at ? "is-completed" : ""} ${
+        idea.priority === "P0" ? "is-focus" : ""
+      }`}
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={handleCardKeyDown}
+      aria-label={`查看灵感：${idea.title}`}
+    >
       <div>
-        <div className="mb-5 flex items-start justify-between gap-3">
+        <div className="mb-3 flex items-start justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             <span className="status-badge">
               <Sparkles className="h-3.5 w-3.5" />
@@ -716,10 +860,14 @@ function IdeaCardView({
           <span className="text-sm text-[#9c9583]">{relativeTime(idea.created_at)}</span>
         </div>
 
-        <h3 className="text-2xl font-black leading-tight tracking-normal text-white">{idea.title}</h3>
-        <p className="mt-3 min-h-[72px] text-sm leading-7 text-[#c7c0aa]">{idea.summary}</p>
+        <div className="focus-meter" aria-hidden="true">
+          <span style={{ width: `${focusValue}%` }} />
+        </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
+        <h3 className="compact-card-title">{idea.title}</h3>
+        <p className="compact-card-summary">{idea.summary}</p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
           {idea.tags.map((tag) => (
             <span key={tag} className="tag-chip">
               {tag}
@@ -727,61 +875,58 @@ function IdeaCardView({
           ))}
         </div>
 
-        <div className="idea-insight-stack">
-          <section className="idea-insight">
-            <p className="idea-insight-kicker">
-              <Lightbulb className="h-3.5 w-3.5" />
-              AI 评价
-            </p>
-            <p>{evaluation}</p>
-          </section>
-
-          <section className="idea-insight">
-            <p className="idea-insight-kicker">
-              <Milestone className="h-3.5 w-3.5" />
-              落地方式
-            </p>
-            <p>{landingWay}</p>
-          </section>
-
-          <section className="idea-insight idea-insight-burst">
-            <p className="idea-insight-kicker">
-              <Sparkles className="h-3.5 w-3.5" />
-              涌现方向
-            </p>
-            <div className="idea-burst-list">
-              {expansionIdeas.map((item) => (
-                <span key={item}>{item}</span>
-              ))}
-            </div>
-          </section>
+        <div className="compact-insight">
+          <Lightbulb className="h-3.5 w-3.5" />
+          <span>{evaluation}</span>
         </div>
       </div>
 
-      <div className="mt-5 border-t border-[#5a5035] pt-4">
-        <p className="mb-3 text-sm text-white">下一步行动：</p>
-        <ul className="space-y-2 text-sm leading-5 text-[#d6cfb9]">
-          {idea.action_items.map((item) => (
-            <li key={item} className="flex gap-2">
-              <span className="mt-2 h-1.5 w-1.5 shrink-0 bg-[#ffd95a]" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
+      <div className="compact-card-footer">
+        {idea.reward_pet ? (
+          <span className="reward-mini">
+            <Gift className="h-3.5 w-3.5" />
+            {idea.reward_pet.name}
+          </span>
+        ) : (
+          <span className="open-hint">
+            <Eye className="h-3.5 w-3.5" />
+            聚焦
+          </span>
+        )}
 
-        <div className="card-actions-grid mt-5 grid grid-cols-[44px_1fr_112px] gap-3">
-          <button className="card-action" type="button" onClick={onEdit} aria-label="编辑灵感" title="编辑灵感">
-            <Edit3 className="h-5 w-5" />
+        <div className="compact-actions">
+          <button
+            className="card-action icon-only"
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit();
+            }}
+            aria-label="编辑灵感"
+            title="编辑灵感"
+          >
+            <Edit3 className="h-4 w-4" />
           </button>
-          <button className="card-action gap-2" type="button" onClick={onCopy}>
-            {copied ? <Check className="h-5 w-5 text-[#ffd95a]" /> : <Clipboard className="h-5 w-5" />}
-            {copied ? "已复制" : "复制分享"}
+          <button
+            className="card-action icon-only"
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onCopy();
+            }}
+            aria-label="复制分享"
+            title="复制分享"
+          >
+            {copied ? <Check className="h-4 w-4 text-[#ffd95a]" /> : <Clipboard className="h-4 w-4" />}
           </button>
           <div className="priority-picker">
             <button
-              className={`card-action priority-trigger ${idea.priority ? `priority-${idea.priority.toLowerCase()}` : ""}`}
+              className={`card-action priority-trigger compact-priority ${idea.priority ? `priority-${idea.priority.toLowerCase()}` : ""}`}
               type="button"
-              onClick={() => setPriorityOpen((open) => !open)}
+              onClick={(event) => {
+                event.stopPropagation();
+                setPriorityOpen((open) => !open);
+              }}
               aria-expanded={priorityOpen}
               aria-label="设置优先级标签"
               title="设置优先级标签"
@@ -798,7 +943,8 @@ function IdeaCardView({
                     className={`priority-option priority-${priority.level.toLowerCase()} ${
                       idea.priority === priority.level ? "is-selected" : ""
                     }`}
-                    onClick={() => {
+                    onClick={(event) => {
+                      event.stopPropagation();
                       onSetPriority(priority.level);
                       setPriorityOpen(false);
                     }}
@@ -813,6 +959,189 @@ function IdeaCardView({
         </div>
       </div>
     </article>
+  );
+}
+
+function IdeaDetail({
+  idea,
+  copied,
+  onClose,
+  onCopy,
+  onEdit,
+  onComplete,
+  onSetPriority
+}: {
+  idea: IdeaCard;
+  copied: boolean;
+  onClose: () => void;
+  onCopy: () => void;
+  onEdit: () => void;
+  onComplete: () => void;
+  onSetPriority: (priority: PriorityLevel) => void;
+}) {
+  const evaluation = getIdeaEvaluation(idea);
+  const landingWay = getIdeaLandingWay(idea);
+  const expansionIdeas = getIdeaExpansionIdeas(idea);
+  const focusValue = getFocusValue(idea.priority);
+
+  return (
+    <div className="focus-backdrop" role="dialog" aria-modal="true" aria-label="灵感专注舱">
+      <section className={`focus-panel ${idea.priority === "P0" ? "is-p0" : ""}`}>
+        <button className="focus-close" type="button" onClick={onClose} aria-label="关闭详情" title="关闭详情">
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="focus-header">
+          <div className="min-w-0">
+            <p className="pixel-kicker">Focus Chamber</p>
+            <h2>{idea.title}</h2>
+            <p>{idea.summary}</p>
+          </div>
+          <div className="focus-header-actions">
+            <button className="card-action gap-2" type="button" onClick={onEdit}>
+              <Edit3 className="h-4 w-4" />
+              编辑
+            </button>
+            <button className="card-action gap-2" type="button" onClick={onCopy}>
+              {copied ? <Check className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
+              {copied ? "已复制" : "复制"}
+            </button>
+          </div>
+        </div>
+
+        <div className="focus-layout">
+          <div className="focus-main">
+            <section className="focus-section">
+              <p className="focus-section-title">
+                <Lightbulb className="h-4 w-4" />
+                AI 评价
+              </p>
+              <p>{evaluation}</p>
+            </section>
+
+            <section className="focus-section">
+              <p className="focus-section-title">
+                <Milestone className="h-4 w-4" />
+                落地方式
+              </p>
+              <p>{landingWay}</p>
+            </section>
+
+            <section className="focus-section">
+              <p className="focus-section-title">
+                <Sparkles className="h-4 w-4" />
+                涌现方向
+              </p>
+              <div className="focus-chip-list">
+                {expansionIdeas.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
+              </div>
+            </section>
+
+            <section className="focus-section">
+              <p className="focus-section-title">
+                <CheckCircle2 className="h-4 w-4" />
+                下一步行动
+              </p>
+              <ul className="focus-action-list">
+                {idea.action_items.map((item, index) => (
+                  <li key={item}>
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="focus-section">
+              <p className="focus-section-title">原始想法</p>
+              <p>{idea.original_text}</p>
+            </section>
+          </div>
+
+          <aside className="focus-sidebar">
+            <section className="focus-console">
+              <p className="pixel-kicker">Attention</p>
+              <div className="focus-score">
+                <strong>{focusValue}</strong>
+                <span>/ 100</span>
+              </div>
+              <div className="focus-meter is-large" aria-hidden="true">
+                <span style={{ width: `${focusValue}%` }} />
+              </div>
+              <div className="priority-command-grid">
+                {priorityLevels.map((priority) => (
+                  <button
+                    key={priority.level}
+                    type="button"
+                    className={`priority-option priority-${priority.level.toLowerCase()} ${
+                      idea.priority === priority.level ? "is-selected" : ""
+                    }`}
+                    onClick={() => onSetPriority(priority.level)}
+                  >
+                    <span>{priority.label}</span>
+                    <small>{priority.description}</small>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="focus-console">
+              <p className="pixel-kicker">Prize Hatch</p>
+              {idea.reward_pet ? (
+                <div className="focus-pet">
+                  <PetSprite pet={idea.reward_pet} />
+                  <strong>{idea.reward_pet.name}</strong>
+                  <span>{idea.reward_pet.motto}</span>
+                </div>
+              ) : (
+                <>
+                  <p className="focus-console-copy">完成这个灵感项目，抽取一个随机灵感小宠物放入奖池。</p>
+                  <button className="complete-button" type="button" onClick={onComplete}>
+                    <Gift className="h-4 w-4" />
+                    完成项目并开奖
+                  </button>
+                </>
+              )}
+            </section>
+          </aside>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function PetSprite({ pet }: { pet: InspirationPet }) {
+  const spriteStyle = {
+    "--pet-main": pet.palette[0],
+    "--pet-accent": pet.palette[1],
+    "--pet-glow": pet.palette[2]
+  } as React.CSSProperties;
+
+  return (
+    <div className={`pet-sprite pet-sprite-${pet.sprite}`} style={spriteStyle} aria-hidden="true">
+      <span className="pet-eye pet-eye-left" />
+      <span className="pet-eye pet-eye-right" />
+      <span className="pet-core" />
+    </div>
+  );
+}
+
+function RewardReveal({ pet, onClose }: { pet: InspirationPet; onClose: () => void }) {
+  return (
+    <div className="reward-backdrop" role="dialog" aria-modal="true" aria-label="灵感奖励">
+      <section className="reward-panel">
+        <p className="pixel-kicker">Prize Unlocked</p>
+        <PetSprite pet={pet} />
+        <h2>{pet.name}</h2>
+        <p>{pet.species}</p>
+        <span>{pet.motto}</span>
+        <button className="complete-button" type="button" onClick={onClose}>
+          收进奖池
+        </button>
+      </section>
+    </div>
   );
 }
 
@@ -1110,6 +1439,17 @@ function getIdeaExpansionIdeas(idea: IdeaCard) {
 
   const leadTag = idea.tags[0] || "创意";
   return [`做成 7 天验证实验`, `寻找「${leadTag}」核心用户`, "增加 AI 自动整理能力"];
+}
+
+function getFocusValue(priority?: PriorityLevel) {
+  const values: Record<PriorityLevel, number> = {
+    P0: 96,
+    P1: 78,
+    P2: 54,
+    P3: 28
+  };
+
+  return priority ? values[priority] : 40;
 }
 
 function EditorField({

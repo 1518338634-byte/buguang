@@ -1,5 +1,16 @@
 export type IdeaStatus = "Spark 闪念" | "Draft 草案";
 export type PriorityLevel = "P0" | "P1" | "P2" | "P3";
+export type PetSprite = "spark" | "cube" | "moon" | "seed";
+
+export type InspirationPet = {
+  id: string;
+  name: string;
+  species: string;
+  sprite: PetSprite;
+  palette: [string, string, string];
+  motto: string;
+  awarded_at: string;
+};
 
 export type IdeaCard = {
   id: string;
@@ -13,6 +24,8 @@ export type IdeaCard = {
   landing_way?: string;
   expansion_ideas?: string[];
   action_items: string[];
+  completed_at?: string;
+  reward_pet?: InspirationPet;
   created_at: string;
 };
 
@@ -82,6 +95,7 @@ export function formatIdeaMarkdown(idea: IdeaCard) {
     idea.evaluation ? `评价：${idea.evaluation}` : "",
     idea.landing_way ? `落地方式：${idea.landing_way}` : "",
     idea.expansion_ideas?.length ? `延展想法：${idea.expansion_ideas.join("；")}` : "",
+    idea.reward_pet ? `完成奖励：${idea.reward_pet.name}（${idea.reward_pet.species}）` : "",
     "",
     "## 下一步",
     ...idea.action_items.map((item, index) => `${index + 1}. ${item}`),
@@ -89,6 +103,31 @@ export function formatIdeaMarkdown(idea: IdeaCard) {
     "## 原始想法",
     idea.original_text
   ].join("\n");
+}
+
+export function generateInspirationPet(idea: Pick<IdeaCard, "title" | "tags">): InspirationPet {
+  const petNames = ["闪闪", "像素豆", "星核", "小回路", "灵光", "点点", "金橡", "跳频"];
+  const species = ["灵感星灵", "像素守护者", "点子孵化兽", "灵光小伙伴", "项目守望者"];
+  const sprites: PetSprite[] = ["spark", "cube", "moon", "seed"];
+  const palettes: Array<[string, string, string]> = [
+    ["#ffd95a", "#fff2b0", "#6f4cff"],
+    ["#7ddcff", "#f7f3dd", "#ffbd59"],
+    ["#ff6b5e", "#ffd95a", "#2fe6a6"],
+    ["#c5cdbf", "#ffe47a", "#7ddcff"]
+  ];
+  const mottoSeed = idea.tags[0] || "创意";
+  const seed = `${idea.title}-${idea.tags.join("-")}-${Date.now()}-${Math.random()}`;
+  const hash = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+
+  return {
+    id: crypto.randomUUID(),
+    name: petNames[hash % petNames.length],
+    species: species[(hash + idea.title.length) % species.length],
+    sprite: sprites[(hash + idea.tags.length) % sprites.length],
+    palette: palettes[hash % palettes.length],
+    motto: `守护你的「${mottoSeed}」项目继续发光`,
+    awarded_at: new Date().toISOString()
+  };
 }
 
 function pickTags(input: string) {
