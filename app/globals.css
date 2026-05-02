@@ -474,6 +474,52 @@ select {
   font-size: 13px;
 }
 
+.idea-insight-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.idea-insight {
+  border-left: 2px solid rgba(255, 217, 90, 0.56);
+  background:
+    linear-gradient(90deg, rgba(255, 217, 90, 0.08), rgba(255, 217, 90, 0.015)),
+    rgba(0, 0, 0, 0.24);
+  padding: 8px 10px;
+}
+
+.idea-insight-kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+  color: #ffe47a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.idea-insight > p:not(.idea-insight-kicker) {
+  color: #d6cfb9;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.idea-burst-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.idea-burst-list span {
+  border: 1px solid rgba(255, 217, 90, 0.34);
+  background: rgba(255, 217, 90, 0.06);
+  padding: 4px 7px;
+  color: #f1e6b0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .card-action {
   min-height: 42px;
 }
@@ -1044,6 +1090,19 @@ select {
   .idea-card p,
   .idea-card li {
     line-height: 1.75;
+  }
+
+  .idea-insight-stack {
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .idea-insight {
+    padding: 8px;
+  }
+
+  .idea-burst-list span {
+    max-width: 100%;
   }
 
   .card-actions-grid {

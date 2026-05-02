@@ -7,10 +7,12 @@ import {
   Edit3,
   Grid3X3,
   LayoutGrid,
+  Lightbulb,
   List,
   Loader2,
   Mic,
   MicOff,
+  Milestone,
   Rocket,
   Settings,
   Sparkles,
@@ -41,6 +43,9 @@ const sampleIdeas: IdeaCard[] = [
     tags: ["工具", "学习", "效率"],
     status: "Spark 闪念",
     priority: "P0",
+    evaluation: "这个想法的场景清晰，容易做出可感知价值；风险是专注类产品同质化，需要找到更强的学习反馈闭环。",
+    landing_way: "先做番茄钟、白噪音和学习统计三件事，用 20 名学生测试 7 天留存和完成率。",
+    expansion_ideas: ["加入 AI 学习计划生成", "做班级或自习室排行榜", "把专注数据转成成长报告"],
     action_items: ["设计产品原型并进行用户调研", "实现番茄钟和白噪音核心功能"],
     created_at: new Date(Date.now() - 40_000).toISOString()
   },
@@ -52,6 +57,9 @@ const sampleIdeas: IdeaCard[] = [
     tags: ["旅行", "AI", "个性化"],
     status: "Draft 草案",
     priority: "P1",
+    evaluation: "需求真实但竞争明显，差异点应放在实时约束和个性偏好，而不是泛泛生成攻略。",
+    landing_way: "先聚焦周末短途旅行，输入预算、天数和兴趣后生成一页可执行路线。",
+    expansion_ideas: ["加入多人偏好协调", "接入预算提醒", "生成可分享的旅行卡片"],
     action_items: ["收集旅行数据和景点信息", "设计行程生成算法逻辑"],
     created_at: new Date(Date.now() - 120_000).toISOString()
   },
@@ -63,6 +71,9 @@ const sampleIdeas: IdeaCard[] = [
     tags: ["情绪", "社区", "AI"],
     status: "Spark 闪念",
     priority: "P2",
+    evaluation: "情绪陪伴有温度和黏性，但需要非常谨慎处理安全边界和隐私信任。",
+    landing_way: "先做匿名树洞和 AI 温柔回应，不做公开社区，验证用户是否愿意持续记录。",
+    expansion_ideas: ["加入情绪趋势日历", "设计危机提示机制", "推出每日自我关怀卡片"],
     action_items: ["设计社区互动和匿名机制", "设计 AI 的共情回复模型"],
     created_at: new Date(Date.now() - 3_600_000).toISOString()
   },
@@ -74,6 +85,9 @@ const sampleIdeas: IdeaCard[] = [
     tags: ["商业", "平台", "创意"],
     status: "Draft 草案",
     priority: "P3",
+    evaluation: "平台型想法空间大，但冷启动难度高；更适合先从小圈层撮合和案例沉淀开始。",
+    landing_way: "先做一个人工审核的灵感看板，撮合 10 个想法方和资源方，验证成交动机。",
+    expansion_ideas: ["增加创意悬赏机制", "建立灵感估值模板", "做成功案例展示页"],
     action_items: ["确定平台商业模式和抽成机制", "设计 MVP 版本核心流程"],
     created_at: new Date(Date.now() - 86_400_000).toISOString()
   }
@@ -479,7 +493,7 @@ export default function Home() {
             ) : selectedView === "settings" ? (
               <SettingsLibrary ideas={ideas} tagCount={allTags.size} favoriteCount={favoriteIdeas.length} />
             ) : visibleIdeas.length ? (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {visibleIdeas.map((idea) => (
                   <IdeaCardView
                     key={idea.id}
@@ -610,7 +624,7 @@ function TagLibrary({
             <h3 className="text-xl font-bold text-white">#{item.tag}</h3>
             <span className="font-mono text-xs text-[#8f8877]">{item.count} 张卡片</span>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {item.ideas.map((idea) => (
               <IdeaCardView
                 key={`${item.tag}-${idea.id}`}
@@ -684,9 +698,12 @@ function IdeaCardView({
   onSetPriority: (priority: PriorityLevel) => void;
 }) {
   const [priorityOpen, setPriorityOpen] = useState(false);
+  const evaluation = getIdeaEvaluation(idea);
+  const landingWay = getIdeaLandingWay(idea);
+  const expansionIdeas = getIdeaExpansionIdeas(idea);
 
   return (
-    <article className="idea-card group flex min-h-[400px] flex-col justify-between p-4">
+    <article className="idea-card group flex min-h-[480px] flex-col justify-between p-4">
       <div>
         <div className="mb-5 flex items-start justify-between gap-3">
           <div className="flex flex-wrap gap-2">
@@ -708,6 +725,36 @@ function IdeaCardView({
               {tag}
             </span>
           ))}
+        </div>
+
+        <div className="idea-insight-stack">
+          <section className="idea-insight">
+            <p className="idea-insight-kicker">
+              <Lightbulb className="h-3.5 w-3.5" />
+              AI 评价
+            </p>
+            <p>{evaluation}</p>
+          </section>
+
+          <section className="idea-insight">
+            <p className="idea-insight-kicker">
+              <Milestone className="h-3.5 w-3.5" />
+              落地方式
+            </p>
+            <p>{landingWay}</p>
+          </section>
+
+          <section className="idea-insight idea-insight-burst">
+            <p className="idea-insight-kicker">
+              <Sparkles className="h-3.5 w-3.5" />
+              涌现方向
+            </p>
+            <div className="idea-burst-list">
+              {expansionIdeas.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
+          </section>
         </div>
       </div>
 
@@ -782,6 +829,9 @@ function IdeaEditor({
     title: idea.title,
     summary: idea.summary,
     original_text: idea.original_text,
+    evaluation: getIdeaEvaluation(idea),
+    landingWay: getIdeaLandingWay(idea),
+    expansionIdeas: getIdeaExpansionIdeas(idea).join("\n"),
     tags: idea.tags.join("，"),
     status: idea.status,
     priority: idea.priority || "P2",
@@ -812,6 +862,9 @@ function IdeaEditor({
       tags: tags.length ? tags : ["创意"],
       status: draft.status === "Draft 草案" ? "Draft 草案" : "Spark 闪念",
       priority: draft.priority as PriorityLevel,
+      evaluation: draft.evaluation.trim() || getIdeaEvaluation(idea),
+      landing_way: draft.landingWay.trim() || getIdeaLandingWay(idea),
+      expansion_ideas: normalizeExpansionDraft(draft.expansionIdeas),
       action_items: [
         draft.actionOne.trim() || "明确目标用户和核心场景",
         draft.actionTwo.trim() || "设计一个可验证的最小原型"
@@ -830,6 +883,9 @@ function IdeaEditor({
         ...current,
         title: improvedIdea.title,
         summary: improvedIdea.summary,
+        evaluation: getIdeaEvaluation(improvedIdea),
+        landingWay: getIdeaLandingWay(improvedIdea),
+        expansionIdeas: getIdeaExpansionIdeas(improvedIdea).join("\n"),
         tags: improvedIdea.tags.join("，"),
         status: improvedIdea.status,
         actionOne: improvedIdea.action_items[0] || current.actionOne,
@@ -872,7 +928,7 @@ function IdeaEditor({
             rows={3}
           />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p>{assistError || "AI 会基于当前卡片内容，重写标题、摘要、标签和行动建议。"}</p>
+            <p>{assistError || "AI 会基于当前卡片内容，补强评价、落地方式、涌现方向和行动建议。"}</p>
             <button className="ai-assist-button" type="button" onClick={handleAiImprove} disabled={isImproving}>
               {isImproving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {isImproving ? "AI 正在完善" : "AI 辅助完善"}
@@ -902,6 +958,30 @@ function IdeaEditor({
               value={draft.original_text}
               onChange={(event) => updateDraft("original_text", event.target.value)}
               rows={5}
+            />
+          </EditorField>
+
+          <EditorField label="AI 评价" wide>
+            <textarea
+              value={draft.evaluation}
+              onChange={(event) => updateDraft("evaluation", event.target.value)}
+              rows={3}
+            />
+          </EditorField>
+
+          <EditorField label="落地方式" wide>
+            <textarea
+              value={draft.landingWay}
+              onChange={(event) => updateDraft("landingWay", event.target.value)}
+              rows={3}
+            />
+          </EditorField>
+
+          <EditorField label="涌现方向（每行一条）" wide>
+            <textarea
+              value={draft.expansionIdeas}
+              onChange={(event) => updateDraft("expansionIdeas", event.target.value)}
+              rows={4}
             />
           </EditorField>
 
@@ -966,6 +1046,9 @@ function buildImprovePrompt(
     title: string;
     summary: string;
     original_text: string;
+    evaluation: string;
+    landingWay: string;
+    expansionIdeas: string;
     tags: string;
     status: string;
     actionOne: string;
@@ -980,12 +1063,53 @@ function buildImprovePrompt(
     `当前标题：${draft.title}`,
     `当前总结：${draft.summary}`,
     `当前灵感内容：${draft.original_text}`,
+    `当前 AI 评价：${draft.evaluation}`,
+    `当前落地方式：${draft.landingWay}`,
+    `当前涌现方向：${draft.expansionIdeas}`,
     `当前标签：${draft.tags}`,
     `当前状态：${draft.status}`,
     `当前行动建议：1. ${draft.actionOne} 2. ${draft.actionTwo}`,
     "",
-    "请保留核心想法，但可以优化表达、补充更具体的下一步行动。"
+    "请保留核心想法，但可以优化表达，并补充更有判断力的评价、可执行的落地方式、能激发更多想法的涌现方向。"
   ].join("\n");
+}
+
+function normalizeExpansionDraft(value: string) {
+  const items = value
+    .split(/\n|[；;]/)
+    .map((item) => item.trim().replace(/^[-*]\s*/, ""))
+    .filter(Boolean)
+    .slice(0, 3);
+
+  while (items.length < 2) {
+    items.push(items.length === 0 ? "拆成一个可验证的小实验" : "邀请目标用户给出第一轮反馈");
+  }
+
+  return items;
+}
+
+function getIdeaEvaluation(idea: IdeaCard) {
+  if (idea.evaluation?.trim()) return idea.evaluation.trim();
+
+  const leadTag = idea.tags[0] || "创意";
+  return `这个灵感已经有可探索的切口，适合先围绕「${leadTag}」验证真实需求；主要风险是表达有趣但场景还不够聚焦。`;
+}
+
+function getIdeaLandingWay(idea: IdeaCard) {
+  if (idea.landing_way?.trim()) return idea.landing_way.trim();
+
+  const leadTag = idea.tags[0] || "创意";
+  return `先做一个只服务单一场景的 MVP，把「${leadTag}」变成可演示流程，再找 3-5 个目标用户试用反馈。`;
+}
+
+function getIdeaExpansionIdeas(idea: IdeaCard) {
+  if (idea.expansion_ideas?.length) {
+    const savedIdeas = idea.expansion_ideas.map((item) => item.trim()).filter(Boolean).slice(0, 3);
+    if (savedIdeas.length) return savedIdeas;
+  }
+
+  const leadTag = idea.tags[0] || "创意";
+  return [`做成 7 天验证实验`, `寻找「${leadTag}」核心用户`, "增加 AI 自动整理能力"];
 }
 
 function EditorField({

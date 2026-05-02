@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { IdeaCard, IdeaStatus } from "@/lib/ideas";
+import { IdeaCard, IdeaStatus, incubateIdeaLocally } from "@/lib/ideas";
 
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
 const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
 
   if (!apiKey) {
-    return NextResponse.json({ message: "DeepSeek API key is not configured" }, { status: 500 });
+    return NextResponse.json(incubateIdeaLocally(text));
   }
 
   try {
@@ -25,6 +25,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`
       },
+      signal: AbortSignal.timeout(18_000),
       body: JSON.stringify({
         model: DEEPSEEK_MODEL,
         messages: [
@@ -39,36 +40,27 @@ export async function POST(request: Request) {
           }
         ],
         response_format: { type: "json_object" },
+        thinking: { type: "disabled" },
         stream: false,
-        max_tokens: 900,
-        temperature: 0.7
+        max_tokens: 1200,
+        temperature: 0.82
       })
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      return NextResponse.json(
-        { message: "DeepSeek API request failed", detail: errorText },
-        { status: response.status }
-      );
+      return NextResponse.json(incubateIdeaLocally(text));
     }
 
     const payload = (await response.json()) as DeepSeekChatResponse;
     const content = payload.choices?.[0]?.message?.content;
 
     if (!content) {
-      return NextResponse.json({ message: "DeepSeek returned empty content" }, { status: 502 });
+      return NextResponse.json(incubateIdeaLocally(text));
     }
 
     return NextResponse.json(toIdeaCard(text, content));
-  } catch (error) {
-    return NextResponse.json(
-      {
-        message: "AI 孵化服务暂时不可用",
-        detail: error instanceof Error ? error.message : "Unknown error"
-      },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json(incubateIdeaLocally(text));
   }
 }
 
@@ -84,12 +76,18 @@ JSON 格式必须完全符合这个结构：
   "summary": "一句话总结，50字以内",
   "tags": ["2-3个中文标签"],
   "status": "Spark 闪念 或 Draft 草案",
+  "evaluation": "对这个灵感的评价，指出亮点、潜力和一个主要风险，80字以内",
+  "landing_way": "这个灵感的第一种落地方式，具体到 MVP 或验证路径，80字以内",
+  "expansion_ideas": ["2-3个可继续发散的新想法或变体方向"],
   "action_items": ["具体的下一步行动建议1", "具体的下一步行动建议2"]
 }
 
 要求：
 - tags 必须是 2 到 3 个短标签。
 - status 只能是 "Spark 闪念" 或 "Draft 草案"。
+- evaluation 要像产品合伙人的判断，不要空泛夸奖。
+- landing_way 要能让用户知道下一周具体做什么。
+- expansion_ideas 必须给用户新的想法涌现，不要重复 action_items。
 - action_items 必须刚好 2 条，具体、可执行。
 - 不要包含 id、created_at 或 original_text，这些字段由系统生成。`;
 }
@@ -104,6 +102,9 @@ function toIdeaCard(originalText: string, content: string): IdeaCard {
     summary: asString(parsed.summary, originalText).slice(0, 120),
     tags: normalizeTags(parsed.tags),
     status: normalizeStatus(parsed.status),
+    evaluation: asString(parsed.evaluation, createFallbackEvaluation(originalText)).slice(0, 140),
+    landing_way: asString(parsed.landing_way, createFallbackLandingWay(originalText)).slice(0, 140),
+    expansion_ideas: normalizeExpansionIdeas(parsed.expansion_ideas),
     action_items: normalizeActionItems(parsed.action_items),
     created_at: new Date().toISOString()
   };
@@ -156,6 +157,32 @@ function normalizeActionItems(value: unknown) {
   }
 
   return items;
+}
+
+function normalizeExpansionIdeas(value: unknown) {
+  if (!Array.isArray(value)) {
+    return ["拆成一个可验证的 MVP", "寻找真实用户访谈", "尝试加入 AI 自动化能力"];
+  }
+
+  const ideas = value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+
+  while (ideas.length < 2) {
+    ideas.push(ideas.length === 0 ? "拆成一个可验证的 MVP" : "寻找真实用户访谈");
+  }
+
+  return ideas;
+}
+
+function createFallbackEvaluation(originalText: string) {
+  return `这个灵感有继续探索的价值，核心需要验证的是用户是否愿意为「${originalText.slice(0, 18)}」投入时间或付费。`;
+}
+
+function createFallbackLandingWay(originalText: string) {
+  return `先围绕「${originalText.slice(0, 18)}」做一个单场景 MVP，用 3-5 个用户访谈验证需求强度。`;
 }
 
 type DeepSeekChatResponse = {

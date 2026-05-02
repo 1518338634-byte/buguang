@@ -9,6 +9,9 @@ export type IdeaCard = {
   tags: string[];
   status: IdeaStatus;
   priority?: PriorityLevel;
+  evaluation?: string;
+  landing_way?: string;
+  expansion_ideas?: string[];
   action_items: string[];
   created_at: string;
 };
@@ -41,6 +44,9 @@ export function incubateIdeaLocally(input: string): IdeaCard {
     summary,
     tags,
     status: cleanInput.length > 80 ? "Draft 草案" : "Spark 闪念",
+    evaluation: createEvaluation(cleanInput, tags),
+    landing_way: createLandingWay(tags),
+    expansion_ideas: createExpansionIdeas(cleanInput, tags),
     action_items: createActionItems(cleanInput, tags),
     created_at: new Date().toISOString()
   };
@@ -73,6 +79,9 @@ export function formatIdeaMarkdown(idea: IdeaCard) {
     "",
     `状态：${idea.status}`,
     `标签：${idea.tags.map((tag) => `#${tag}`).join(" ")}`,
+    idea.evaluation ? `评价：${idea.evaluation}` : "",
+    idea.landing_way ? `落地方式：${idea.landing_way}` : "",
+    idea.expansion_ideas?.length ? `延展想法：${idea.expansion_ideas.join("；")}` : "",
     "",
     "## 下一步",
     ...idea.action_items.map((item, index) => `${index + 1}. ${item}`),
@@ -102,6 +111,23 @@ function createTitle(input: string, tags: string[]) {
 function createSummary(input: string, tags: string[]) {
   const excerpt = input.length > 56 ? `${input.slice(0, 56)}...` : input;
   return `围绕「${excerpt}」建立一个以${tags[0]}为核心、可快速验证的创意方向。`;
+}
+
+function createEvaluation(input: string, tags: string[]) {
+  const angle = input.length > 90 ? "已经具备草案雏形" : "仍处在闪念阶段";
+  return `这个想法${angle}，优势在于能围绕「${tags[0]}」形成清晰切口，下一步需要尽快验证真实需求强度。`;
+}
+
+function createLandingWay(tags: string[]) {
+  return `先做一个围绕「${tags[0]}」的最小可用版本：只保留一个核心场景、一条关键流程和一个可衡量的反馈指标。`;
+}
+
+function createExpansionIdeas(input: string, tags: string[]) {
+  return [
+    `把它拆成一个 7 天内可完成的小实验`,
+    `寻找 3 个目标用户验证「${tags[0]}」痛点`,
+    input.includes("AI") || input.includes("ai") ? "增加人工审核和结果可解释机制" : "加入 AI 辅助分析或自动整理能力"
+  ];
 }
 
 function createActionItems(input: string, tags: string[]) {
