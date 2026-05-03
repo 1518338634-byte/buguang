@@ -10,7 +10,6 @@ import {
   Eye,
   Gift,
   LayoutGrid,
-  Lightbulb,
   List,
   Loader2,
   Mic,
@@ -41,7 +40,7 @@ const MAX_LENGTH = 500;
 const loadingMessages = [
   "AI 正在提炼关键词，构建你的创意卡片...",
   "正在压缩想法噪音，寻找最亮的主线...",
-  "正在生成下一步行动建议...",
+  "正在生成 MVP 路线和 AI 可解决的问题...",
   "正在把碎片整理成可分享的灵感卡片..."
 ];
 
@@ -54,10 +53,11 @@ const sampleIdeas: IdeaCard[] = [
     tags: ["工具", "学习", "效率"],
     status: "Spark 闪念",
     priority: "P0",
-    evaluation: "这个想法的场景清晰，容易做出可感知价值；风险是专注类产品同质化，需要找到更强的学习反馈闭环。",
-    landing_way: "先做番茄钟、白噪音和学习统计三件事，用 20 名学生测试 7 天留存和完成率。",
-    expansion_ideas: ["加入 AI 学习计划生成", "做班级或自习室排行榜", "把专注数据转成成长报告"],
-    action_items: ["设计产品原型并进行用户调研", "实现番茄钟和白噪音核心功能"],
+    mvp_plan: "先做一个专注计时 + 白噪音 + 学习记录的单人版，用 20 名学生测试 7 天完成率和复用意愿。",
+    mvp_features: ["番茄钟计时", "白噪音播放", "学习记录保存", "专注报告生成"],
+    iteration_directions: ["V1.1：加入 AI 学习计划", "V1.2：做自习室排行榜", "V2.0：生成长期成长报告"],
+    ai_impact: ["整理成本：预计减少 60%-75%", "复盘压力：预计减少 40%-55%", "计划制定：预计减少 35%-50%"],
+    action_items: ["整理成本：预计减少 60%-75%", "复盘压力：预计减少 40%-55%", "计划制定：预计减少 35%-50%"],
     created_at: new Date(Date.now() - 40_000).toISOString()
   },
   {
@@ -68,10 +68,11 @@ const sampleIdeas: IdeaCard[] = [
     tags: ["旅行", "AI", "个性化"],
     status: "Draft 草案",
     priority: "P1",
-    evaluation: "需求真实但竞争明显，差异点应放在实时约束和个性偏好，而不是泛泛生成攻略。",
-    landing_way: "先聚焦周末短途旅行，输入预算、天数和兴趣后生成一页可执行路线。",
-    expansion_ideas: ["加入多人偏好协调", "接入预算提醒", "生成可分享的旅行卡片"],
-    action_items: ["收集旅行数据和景点信息", "设计行程生成算法逻辑"],
+    mvp_plan: "先做周末短途旅行生成器，只输入预算、天数和兴趣，输出一页可执行路线并支持保存。",
+    mvp_features: ["偏好输入", "路线生成", "预算提示", "行程保存"],
+    iteration_directions: ["V1.1：加入多人偏好协调", "V1.2：接入预算提醒", "V2.0：生成可分享旅行卡片"],
+    ai_impact: ["攻略整理：预计减少 65%-85%", "路线决策：预计减少 45%-60%", "预算估算：预计减少 30%-45%"],
+    action_items: ["攻略整理：预计减少 65%-85%", "路线决策：预计减少 45%-60%", "预算估算：预计减少 30%-45%"],
     created_at: new Date(Date.now() - 120_000).toISOString()
   },
   {
@@ -82,10 +83,11 @@ const sampleIdeas: IdeaCard[] = [
     tags: ["情绪", "社区", "AI"],
     status: "Spark 闪念",
     priority: "P2",
-    evaluation: "情绪陪伴有温度和黏性，但需要非常谨慎处理安全边界和隐私信任。",
-    landing_way: "先做匿名树洞和 AI 温柔回应，不做公开社区，验证用户是否愿意持续记录。",
-    expansion_ideas: ["加入情绪趋势日历", "设计危机提示机制", "推出每日自我关怀卡片"],
-    action_items: ["设计社区互动和匿名机制", "设计 AI 的共情回复模型"],
+    mvp_plan: "先做匿名情绪记录和 AI 温柔回应，不开放社区互动，重点验证用户是否愿意持续记录。",
+    mvp_features: ["匿名记录", "AI 回应", "情绪标签", "隐私提示"],
+    iteration_directions: ["V1.1：加入情绪趋势日历", "V1.2：设计危机提示机制", "V2.0：推出每日自我关怀卡片"],
+    ai_impact: ["表达整理：预计减少 50%-70%", "情绪命名：预计减少 35%-50%", "自我复盘：预计减少 30%-45%"],
+    action_items: ["表达整理：预计减少 50%-70%", "情绪命名：预计减少 35%-50%", "自我复盘：预计减少 30%-45%"],
     created_at: new Date(Date.now() - 3_600_000).toISOString()
   },
   {
@@ -96,10 +98,11 @@ const sampleIdeas: IdeaCard[] = [
     tags: ["商业", "平台", "创意"],
     status: "Draft 草案",
     priority: "P3",
-    evaluation: "平台型想法空间大，但冷启动难度高；更适合先从小圈层撮合和案例沉淀开始。",
-    landing_way: "先做一个人工审核的灵感看板，撮合 10 个想法方和资源方，验证成交动机。",
-    expansion_ideas: ["增加创意悬赏机制", "建立灵感估值模板", "做成功案例展示页"],
-    action_items: ["确定平台商业模式和抽成机制", "设计 MVP 版本核心流程"],
+    mvp_plan: "先做人工审核的灵感看板，撮合 10 个想法方和资源方，验证双方是否愿意沟通和成交。",
+    mvp_features: ["灵感发布", "人工审核", "资源方报名", "撮合记录"],
+    iteration_directions: ["V1.1：增加创意悬赏机制", "V1.2：建立灵感估值模板", "V2.0：做成功案例展示页"],
+    ai_impact: ["信息整理：预计减少 55%-75%", "匹配筛选：预计减少 35%-55%", "沟通准备：预计减少 30%-45%"],
+    action_items: ["信息整理：预计减少 55%-75%", "匹配筛选：预计减少 35%-55%", "沟通准备：预计减少 30%-45%"],
     created_at: new Date(Date.now() - 86_400_000).toISOString()
   }
 ];
@@ -125,10 +128,10 @@ const priorityLevels: Array<{
   label: string;
   description: string;
 }> = [
-  { level: "P0", label: "P0", description: "最重要" },
-  { level: "P1", label: "P1", description: "高优先级" },
-  { level: "P2", label: "P2", description: "中优先级" },
-  { level: "P3", label: "P3", description: "低优先级" }
+  { level: "P0", label: "P0", description: "当前主线" },
+  { level: "P1", label: "P1", description: "值得推进" },
+  { level: "P2", label: "P2", description: "观察" },
+  { level: "P3", label: "P3", description: "存档" }
 ];
 
 type SpeechRecognitionLike = {
@@ -827,8 +830,7 @@ function IdeaCardView({
   onSetPriority: (priority: PriorityLevel) => void;
 }) {
   const [priorityOpen, setPriorityOpen] = useState(false);
-  const evaluation = getIdeaEvaluation(idea);
-  const focusValue = getFocusValue(idea.priority);
+  const mvpPlan = getIdeaMvpPlan(idea);
 
   function handleCardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
     if (event.key === "Enter" || event.key === " ") {
@@ -860,10 +862,6 @@ function IdeaCardView({
           <span className="text-sm text-[#9c9583]">{relativeTime(idea.created_at)}</span>
         </div>
 
-        <div className="focus-meter" aria-hidden="true">
-          <span style={{ width: `${focusValue}%` }} />
-        </div>
-
         <h3 className="compact-card-title">{idea.title}</h3>
         <p className="compact-card-summary">{idea.summary}</p>
 
@@ -876,8 +874,8 @@ function IdeaCardView({
         </div>
 
         <div className="compact-insight">
-          <Lightbulb className="h-3.5 w-3.5" />
-          <span>{evaluation}</span>
+          <Milestone className="h-3.5 w-3.5" />
+          <span>{mvpPlan}</span>
         </div>
       </div>
 
@@ -979,10 +977,10 @@ function IdeaDetail({
   onComplete: () => void;
   onSetPriority: (priority: PriorityLevel) => void;
 }) {
-  const evaluation = getIdeaEvaluation(idea);
-  const landingWay = getIdeaLandingWay(idea);
-  const expansionIdeas = getIdeaExpansionIdeas(idea);
-  const focusValue = getFocusValue(idea.priority);
+  const mvpPlan = getIdeaMvpPlan(idea);
+  const mvpFeatures = getIdeaMvpFeatures(idea);
+  const iterationDirections = getIdeaIterationDirections(idea);
+  const aiImpact = getIdeaAiImpact(idea);
 
   return (
     <div className="focus-backdrop" role="dialog" aria-modal="true" aria-label="灵感专注舱">
@@ -1013,27 +1011,31 @@ function IdeaDetail({
           <div className="focus-main">
             <section className="focus-section">
               <p className="focus-section-title">
-                <Lightbulb className="h-4 w-4" />
-                AI 评价
+                <Milestone className="h-4 w-4" />
+                最小 MVP 怎么搭建
               </p>
-              <p>{evaluation}</p>
+              <p>{mvpPlan}</p>
             </section>
 
             <section className="focus-section">
               <p className="focus-section-title">
-                <Milestone className="h-4 w-4" />
-                落地方式
+                <LayoutGrid className="h-4 w-4" />
+                MVP 必备功能
               </p>
-              <p>{landingWay}</p>
+              <div className="focus-chip-list">
+                {mvpFeatures.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
+              </div>
             </section>
 
             <section className="focus-section">
               <p className="focus-section-title">
                 <Sparkles className="h-4 w-4" />
-                涌现方向
+                后续版本迭代方向
               </p>
               <div className="focus-chip-list">
-                {expansionIdeas.map((item) => (
+                {iterationDirections.map((item) => (
                   <span key={item}>{item}</span>
                 ))}
               </div>
@@ -1042,10 +1044,10 @@ function IdeaDetail({
             <section className="focus-section">
               <p className="focus-section-title">
                 <CheckCircle2 className="h-4 w-4" />
-                下一步行动
+                AI 预计能解决的问题
               </p>
               <ul className="focus-action-list">
-                {idea.action_items.map((item, index) => (
+                {aiImpact.map((item, index) => (
                   <li key={item}>
                     <span>{String(index + 1).padStart(2, "0")}</span>
                     {item}
@@ -1062,14 +1064,8 @@ function IdeaDetail({
 
           <aside className="focus-sidebar">
             <section className="focus-console">
-              <p className="pixel-kicker">Attention</p>
-              <div className="focus-score">
-                <strong>{focusValue}</strong>
-                <span>/ 100</span>
-              </div>
-              <div className="focus-meter is-large" aria-hidden="true">
-                <span style={{ width: `${focusValue}%` }} />
-              </div>
+              <p className="pixel-kicker">Priority Tag</p>
+              <p className="focus-console-copy">优先级只作为项目标签使用，用来判断当前推进节奏。</p>
               <div className="priority-command-grid">
                 {priorityLevels.map((priority) => (
                   <button
@@ -1121,9 +1117,15 @@ function PetSprite({ pet }: { pet: InspirationPet }) {
 
   return (
     <div className={`pet-sprite pet-sprite-${pet.sprite}`} style={spriteStyle} aria-hidden="true">
-      <span className="pet-eye pet-eye-left" />
-      <span className="pet-eye pet-eye-right" />
-      <span className="pet-core" />
+      <span className="pet-aura" />
+      <span className="pet-body" />
+      <span className="pet-face">
+        <span className="pet-eye pet-eye-left" />
+        <span className="pet-eye pet-eye-right" />
+        <span className="pet-mouth" />
+      </span>
+      <span className="pet-spark pet-spark-one" />
+      <span className="pet-spark pet-spark-two" />
     </div>
   );
 }
@@ -1158,14 +1160,13 @@ function IdeaEditor({
     title: idea.title,
     summary: idea.summary,
     original_text: idea.original_text,
-    evaluation: getIdeaEvaluation(idea),
-    landingWay: getIdeaLandingWay(idea),
-    expansionIdeas: getIdeaExpansionIdeas(idea).join("\n"),
+    mvpPlan: getIdeaMvpPlan(idea),
+    mvpFeatures: getIdeaMvpFeatures(idea).join("\n"),
+    iterationDirections: getIdeaIterationDirections(idea).join("\n"),
+    aiImpact: getIdeaAiImpact(idea).join("\n"),
     tags: idea.tags.join("，"),
     status: idea.status,
     priority: idea.priority || "P2",
-    actionOne: idea.action_items[0] || "",
-    actionTwo: idea.action_items[1] || ""
   });
   const [assistInstruction, setAssistInstruction] = useState("");
   const [assistError, setAssistError] = useState("");
@@ -1191,13 +1192,14 @@ function IdeaEditor({
       tags: tags.length ? tags : ["创意"],
       status: draft.status === "Draft 草案" ? "Draft 草案" : "Spark 闪念",
       priority: draft.priority as PriorityLevel,
-      evaluation: draft.evaluation.trim() || getIdeaEvaluation(idea),
-      landing_way: draft.landingWay.trim() || getIdeaLandingWay(idea),
-      expansion_ideas: normalizeExpansionDraft(draft.expansionIdeas),
-      action_items: [
-        draft.actionOne.trim() || "明确目标用户和核心场景",
-        draft.actionTwo.trim() || "设计一个可验证的最小原型"
-      ]
+      mvp_plan: draft.mvpPlan.trim() || getIdeaMvpPlan(idea),
+      mvp_features: normalizeListDraft(draft.mvpFeatures, ["灵感输入", "AI 结构化生成", "本地保存"]),
+      iteration_directions: normalizeListDraft(draft.iterationDirections, [
+        "V1.1：补充模板化流程",
+        "V1.2：加入数据反馈"
+      ]),
+      ai_impact: normalizeListDraft(draft.aiImpact, ["整理成本：预计减少 60%-80%", "决策压力：预计减少 35%-55%"]),
+      action_items: normalizeListDraft(draft.aiImpact, ["整理成本：预计减少 60%-80%", "决策压力：预计减少 35%-55%"])
     });
   }
 
@@ -1212,13 +1214,12 @@ function IdeaEditor({
         ...current,
         title: improvedIdea.title,
         summary: improvedIdea.summary,
-        evaluation: getIdeaEvaluation(improvedIdea),
-        landingWay: getIdeaLandingWay(improvedIdea),
-        expansionIdeas: getIdeaExpansionIdeas(improvedIdea).join("\n"),
+        mvpPlan: getIdeaMvpPlan(improvedIdea),
+        mvpFeatures: getIdeaMvpFeatures(improvedIdea).join("\n"),
+        iterationDirections: getIdeaIterationDirections(improvedIdea).join("\n"),
+        aiImpact: getIdeaAiImpact(improvedIdea).join("\n"),
         tags: improvedIdea.tags.join("，"),
-        status: improvedIdea.status,
-        actionOne: improvedIdea.action_items[0] || current.actionOne,
-        actionTwo: improvedIdea.action_items[1] || current.actionTwo
+        status: improvedIdea.status
       }));
     } catch (caughtError) {
       setAssistError(caughtError instanceof Error ? caughtError.message : "AI 辅助完善失败，请稍后再试");
@@ -1253,11 +1254,11 @@ function IdeaEditor({
           <textarea
             value={assistInstruction}
             onChange={(event) => setAssistInstruction(event.target.value)}
-            placeholder="例如：把它改得更适合商业落地；补充更具体的下一步；让标题更有吸引力..."
+            placeholder="例如：把 MVP 缩小到一周内能做完；补充 AI 能解决的问题；让迭代路线更清楚..."
             rows={3}
           />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p>{assistError || "AI 会基于当前卡片内容，补强评价、落地方式、涌现方向和行动建议。"}</p>
+            <p>{assistError || "AI 会基于当前卡片内容，补强 MVP 方案、必备功能、迭代路线和 AI 影响范围。"}</p>
             <button className="ai-assist-button" type="button" onClick={handleAiImprove} disabled={isImproving}>
               {isImproving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {isImproving ? "AI 正在完善" : "AI 辅助完善"}
@@ -1290,43 +1291,35 @@ function IdeaEditor({
             />
           </EditorField>
 
-          <EditorField label="AI 评价" wide>
+          <EditorField label="最小 MVP 怎么搭建" wide>
             <textarea
-              value={draft.evaluation}
-              onChange={(event) => updateDraft("evaluation", event.target.value)}
+              value={draft.mvpPlan}
+              onChange={(event) => updateDraft("mvpPlan", event.target.value)}
               rows={3}
             />
           </EditorField>
 
-          <EditorField label="落地方式" wide>
+          <EditorField label="MVP 必备功能（每行一条）" wide>
             <textarea
-              value={draft.landingWay}
-              onChange={(event) => updateDraft("landingWay", event.target.value)}
-              rows={3}
-            />
-          </EditorField>
-
-          <EditorField label="涌现方向（每行一条）" wide>
-            <textarea
-              value={draft.expansionIdeas}
-              onChange={(event) => updateDraft("expansionIdeas", event.target.value)}
+              value={draft.mvpFeatures}
+              onChange={(event) => updateDraft("mvpFeatures", event.target.value)}
               rows={4}
             />
           </EditorField>
 
-          <EditorField label="下一步行动 1" wide>
+          <EditorField label="后续版本迭代方向（每行一条）" wide>
             <textarea
-              value={draft.actionOne}
-              onChange={(event) => updateDraft("actionOne", event.target.value)}
-              rows={2}
+              value={draft.iterationDirections}
+              onChange={(event) => updateDraft("iterationDirections", event.target.value)}
+              rows={4}
             />
           </EditorField>
 
-          <EditorField label="下一步行动 2" wide>
+          <EditorField label="AI 预计能解决的问题（每行一条）" wide>
             <textarea
-              value={draft.actionTwo}
-              onChange={(event) => updateDraft("actionTwo", event.target.value)}
-              rows={2}
+              value={draft.aiImpact}
+              onChange={(event) => updateDraft("aiImpact", event.target.value)}
+              rows={4}
             />
           </EditorField>
 
@@ -1375,81 +1368,81 @@ function buildImprovePrompt(
     title: string;
     summary: string;
     original_text: string;
-    evaluation: string;
-    landingWay: string;
-    expansionIdeas: string;
+    mvpPlan: string;
+    mvpFeatures: string;
+    iterationDirections: string;
+    aiImpact: string;
     tags: string;
     status: string;
-    actionOne: string;
-    actionTwo: string;
   },
   instruction: string
 ) {
   return [
-    "请帮我完善下面这张灵感卡片，让它更清晰、更可执行、更适合放在 FlowState 灵感画板中。",
+    "请帮我完善下面这张灵感卡片，让它更像一份清晰的项目孵化说明书。",
     instruction.trim() ? `我的优化要求：${instruction.trim()}` : "我的优化要求：请自动判断最值得加强的地方。",
     "",
     `当前标题：${draft.title}`,
     `当前总结：${draft.summary}`,
     `当前灵感内容：${draft.original_text}`,
-    `当前 AI 评价：${draft.evaluation}`,
-    `当前落地方式：${draft.landingWay}`,
-    `当前涌现方向：${draft.expansionIdeas}`,
+    `当前最小 MVP：${draft.mvpPlan}`,
+    `当前 MVP 功能：${draft.mvpFeatures}`,
+    `当前后续迭代：${draft.iterationDirections}`,
+    `当前 AI 可解决的问题：${draft.aiImpact}`,
     `当前标签：${draft.tags}`,
     `当前状态：${draft.status}`,
-    `当前行动建议：1. ${draft.actionOne} 2. ${draft.actionTwo}`,
     "",
-    "请保留核心想法，但可以优化表达，并补充更有判断力的评价、可执行的落地方式、能激发更多想法的涌现方向。"
+    "请保留核心想法，但把输出重写为：最小 MVP 怎么搭建、MVP 必备功能、后续版本迭代方向、AI 预计能解决的问题。AI 影响只能用预估范围，不要做绝对评分。"
   ].join("\n");
 }
 
-function normalizeExpansionDraft(value: string) {
+function normalizeListDraft(value: string, fallback: string[]) {
   const items = value
     .split(/\n|[；;]/)
     .map((item) => item.trim().replace(/^[-*]\s*/, ""))
     .filter(Boolean)
-    .slice(0, 3);
+    .slice(0, 5);
 
-  while (items.length < 2) {
-    items.push(items.length === 0 ? "拆成一个可验证的小实验" : "邀请目标用户给出第一轮反馈");
+  while (items.length < Math.min(2, fallback.length)) {
+    items.push(fallback[items.length] || fallback[0]);
   }
 
-  return items;
+  return items.length ? items : fallback;
 }
 
-function getIdeaEvaluation(idea: IdeaCard) {
-  if (idea.evaluation?.trim()) return idea.evaluation.trim();
-
-  const leadTag = idea.tags[0] || "创意";
-  return `这个灵感已经有可探索的切口，适合先围绕「${leadTag}」验证真实需求；主要风险是表达有趣但场景还不够聚焦。`;
-}
-
-function getIdeaLandingWay(idea: IdeaCard) {
+function getIdeaMvpPlan(idea: IdeaCard) {
+  if (idea.mvp_plan?.trim()) return idea.mvp_plan.trim();
   if (idea.landing_way?.trim()) return idea.landing_way.trim();
 
   const leadTag = idea.tags[0] || "创意";
-  return `先做一个只服务单一场景的 MVP，把「${leadTag}」变成可演示流程，再找 3-5 个目标用户试用反馈。`;
+  return `先围绕「${leadTag}」搭建一个单场景 MVP，只保留输入、AI 处理、结果保存和反馈闭环。`;
 }
 
-function getIdeaExpansionIdeas(idea: IdeaCard) {
-  if (idea.expansion_ideas?.length) {
-    const savedIdeas = idea.expansion_ideas.map((item) => item.trim()).filter(Boolean).slice(0, 3);
-    if (savedIdeas.length) return savedIdeas;
-  }
+function getIdeaMvpFeatures(idea: IdeaCard) {
+  const features = idea.mvp_features?.map((item) => item.trim()).filter(Boolean).slice(0, 5);
+  if (features?.length) return features;
+
+  return ["灵感输入", "AI 结构化生成", "本地保存", "复制分享"];
+}
+
+function getIdeaIterationDirections(idea: IdeaCard) {
+  const directions = idea.iteration_directions?.map((item) => item.trim()).filter(Boolean).slice(0, 3);
+  if (directions?.length) return directions;
+
+  const legacyDirections = idea.expansion_ideas?.map((item) => item.trim()).filter(Boolean).slice(0, 3);
+  if (legacyDirections?.length) return legacyDirections;
 
   const leadTag = idea.tags[0] || "创意";
-  return [`做成 7 天验证实验`, `寻找「${leadTag}」核心用户`, "增加 AI 自动整理能力"];
+  return [`V1.1：补充模板化流程`, `V1.2：围绕「${leadTag}」加入反馈分析`, "V2.0：支持团队协作和知识库"];
 }
 
-function getFocusValue(priority?: PriorityLevel) {
-  const values: Record<PriorityLevel, number> = {
-    P0: 96,
-    P1: 78,
-    P2: 54,
-    P3: 28
-  };
+function getIdeaAiImpact(idea: IdeaCard) {
+  const impact = idea.ai_impact?.map((item) => item.trim()).filter(Boolean).slice(0, 3);
+  if (impact?.length) return impact;
 
-  return priority ? values[priority] : 40;
+  const legacyActions = idea.action_items?.map((item) => item.trim()).filter(Boolean).slice(0, 3);
+  if (legacyActions?.length) return legacyActions;
+
+  return ["整理成本：预计减少 60%-80%", "决策压力：预计减少 35%-55%", "执行阻力：预计减少 30%-45%"];
 }
 
 function EditorField({

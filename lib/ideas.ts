@@ -1,6 +1,6 @@
 export type IdeaStatus = "Spark 闪念" | "Draft 草案";
 export type PriorityLevel = "P0" | "P1" | "P2" | "P3";
-export type PetSprite = "spark" | "cube" | "moon" | "seed";
+export type PetSprite = "nova" | "blob" | "crystal" | "bot" | "sprout" | "comet";
 
 export type InspirationPet = {
   id: string;
@@ -23,6 +23,10 @@ export type IdeaCard = {
   evaluation?: string;
   landing_way?: string;
   expansion_ideas?: string[];
+  mvp_plan?: string;
+  mvp_features?: string[];
+  iteration_directions?: string[];
+  ai_impact?: string[];
   action_items: string[];
   completed_at?: string;
   reward_pet?: InspirationPet;
@@ -42,7 +46,6 @@ const tagRules = [
 ];
 
 const titleOpeners = ["把碎片变成系统", "一个可执行的灵感雏形", "从念头到原型", "值得推进的小实验"];
-const statusWords = ["验证", "原型", "拆解", "发布", "沉淀", "连接"];
 
 export function incubateIdeaLocally(input: string): IdeaCard {
   const cleanInput = input.trim().replace(/\s+/g, " ");
@@ -57,10 +60,11 @@ export function incubateIdeaLocally(input: string): IdeaCard {
     summary,
     tags,
     status: cleanInput.length > 80 ? "Draft 草案" : "Spark 闪念",
-    evaluation: createEvaluation(cleanInput, tags),
-    landing_way: createLandingWay(tags),
-    expansion_ideas: createExpansionIdeas(cleanInput, tags),
-    action_items: createActionItems(cleanInput, tags),
+    mvp_plan: createMvpPlan(cleanInput, tags),
+    mvp_features: createMvpFeatures(tags),
+    iteration_directions: createIterationDirections(tags),
+    ai_impact: createAiImpact(tags),
+    action_items: createAiImpact(tags),
     created_at: new Date().toISOString()
   };
 }
@@ -92,13 +96,18 @@ export function formatIdeaMarkdown(idea: IdeaCard) {
     "",
     `状态：${idea.status}`,
     `标签：${idea.tags.map((tag) => `#${tag}`).join(" ")}`,
-    idea.evaluation ? `评价：${idea.evaluation}` : "",
-    idea.landing_way ? `落地方式：${idea.landing_way}` : "",
-    idea.expansion_ideas?.length ? `延展想法：${idea.expansion_ideas.join("；")}` : "",
+    idea.mvp_plan || idea.landing_way ? `最小 MVP：${idea.mvp_plan || idea.landing_way}` : "",
+    idea.mvp_features?.length ? `MVP 功能：${idea.mvp_features.join("；")}` : "",
+    idea.iteration_directions?.length
+      ? `后续迭代：${idea.iteration_directions.join("；")}`
+      : idea.expansion_ideas?.length
+        ? `后续迭代：${idea.expansion_ideas.join("；")}`
+        : "",
+    idea.ai_impact?.length ? `AI 可解决的问题：${idea.ai_impact.join("；")}` : "",
     idea.reward_pet ? `完成奖励：${idea.reward_pet.name}（${idea.reward_pet.species}）` : "",
     "",
-    "## 下一步",
-    ...idea.action_items.map((item, index) => `${index + 1}. ${item}`),
+    "## AI 预计能解决的问题",
+    ...(idea.ai_impact || idea.action_items).map((item, index) => `${index + 1}. ${item}`),
     "",
     "## 原始想法",
     idea.original_text
@@ -106,9 +115,9 @@ export function formatIdeaMarkdown(idea: IdeaCard) {
 }
 
 export function generateInspirationPet(idea: Pick<IdeaCard, "title" | "tags">): InspirationPet {
-  const petNames = ["闪闪", "像素豆", "星核", "小回路", "灵光", "点点", "金橡", "跳频"];
-  const species = ["灵感星灵", "像素守护者", "点子孵化兽", "灵光小伙伴", "项目守望者"];
-  const sprites: PetSprite[] = ["spark", "cube", "moon", "seed"];
+  const petNames = ["闪闪", "像素豆", "星核", "小回路", "灵光", "点点", "金橡", "跳频", "薄荷", "琥珀"];
+  const species = ["灵感星灵", "像素守护者", "点子孵化兽", "灵光小伙伴", "项目守望者", "路线图精灵"];
+  const sprites: PetSprite[] = ["nova", "blob", "crystal", "bot", "sprout", "comet"];
   const palettes: Array<[string, string, string]> = [
     ["#ffd95a", "#fff2b0", "#6f4cff"],
     ["#7ddcff", "#f7f3dd", "#ffbd59"],
@@ -152,27 +161,32 @@ function createSummary(input: string, tags: string[]) {
   return `围绕「${excerpt}」建立一个以${tags[0]}为核心、可快速验证的创意方向。`;
 }
 
-function createEvaluation(input: string, tags: string[]) {
-  const angle = input.length > 90 ? "已经具备草案雏形" : "仍处在闪念阶段";
-  return `这个想法${angle}，优势在于能围绕「${tags[0]}」形成清晰切口，下一步需要尽快验证真实需求强度。`;
+function createMvpPlan(input: string, tags: string[]) {
+  const excerpt = input.length > 28 ? `${input.slice(0, 28)}...` : input;
+  return `先围绕「${excerpt}」搭建一个单场景 MVP：只做输入、AI 处理、结果保存和反馈闭环，用 5-10 个目标用户验证「${tags[0]}」需求是否成立。`;
 }
 
-function createLandingWay(tags: string[]) {
-  return `先做一个围绕「${tags[0]}」的最小可用版本：只保留一个核心场景、一条关键流程和一个可衡量的反馈指标。`;
-}
-
-function createExpansionIdeas(input: string, tags: string[]) {
+function createMvpFeatures(tags: string[]) {
   return [
-    `把它拆成一个 7 天内可完成的小实验`,
-    `寻找 3 个目标用户验证「${tags[0]}」痛点`,
-    input.includes("AI") || input.includes("ai") ? "增加人工审核和结果可解释机制" : "加入 AI 辅助分析或自动整理能力"
+    "灵感输入与结构化整理",
+    `围绕「${tags[0]}」生成 MVP 建议`,
+    "卡片保存、优先级标记和分享",
+    "用户反馈记录与下一轮优化入口"
   ];
 }
 
-function createActionItems(input: string, tags: string[]) {
-  const verb = statusWords[input.length % statusWords.length];
+function createIterationDirections(tags: string[]) {
   return [
-    `用 15 分钟写出这个想法的目标用户、使用场景和最小成功标准。`,
-    `围绕「${tags[0]}」做一次小型${verb}，产出一个可展示的页面、脚本或流程图。`
+    "V1.1：加入模板化工作流和更稳定的输出格式",
+    `V1.2：围绕「${tags[0]}」补充数据看板和用户反馈分析`,
+    "V2.0：支持团队协作、自动复盘和跨项目知识库"
+  ];
+}
+
+function createAiImpact(tags: string[]) {
+  return [
+    "整理成本：预计减少 60%-80%，把碎片想法自动变成可读卡片",
+    "决策压力：预计减少 35%-55%，帮助判断 MVP 范围和优先级",
+    `执行阻力：预计减少 30%-45%，围绕「${tags[0]}」给出可启动的功能清单`
   ];
 }

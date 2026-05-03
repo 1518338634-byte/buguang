@@ -76,19 +76,19 @@ JSON 格式必须完全符合这个结构：
   "summary": "一句话总结，50字以内",
   "tags": ["2-3个中文标签"],
   "status": "Spark 闪念 或 Draft 草案",
-  "evaluation": "对这个灵感的评价，指出亮点、潜力和一个主要风险，80字以内",
-  "landing_way": "这个灵感的第一种落地方式，具体到 MVP 或验证路径，80字以内",
-  "expansion_ideas": ["2-3个可继续发散的新想法或变体方向"],
-  "action_items": ["具体的下一步行动建议1", "具体的下一步行动建议2"]
+  "mvp_plan": "最小 MVP 版本怎么搭建，说明第一版流程、验证方式和边界，100字以内",
+  "mvp_features": ["3-5个 MVP 必备功能"],
+  "iteration_directions": ["2-3个后续版本迭代方向，建议用 V1.1/V1.2/V2.0 开头"],
+  "ai_impact": ["2-3条 AI 预计能解决的问题，用百分比范围表达，例如：整理成本预计减少 60%-80%"]
 }
 
 要求：
 - tags 必须是 2 到 3 个短标签。
 - status 只能是 "Spark 闪念" 或 "Draft 草案"。
-- evaluation 要像产品合伙人的判断，不要空泛夸奖。
-- landing_way 要能让用户知道下一周具体做什么。
-- expansion_ideas 必须给用户新的想法涌现，不要重复 action_items。
-- action_items 必须刚好 2 条，具体、可执行。
+- mvp_plan 要具体到用户第一周能搭建的最小版本，不要写空泛愿景。
+- mvp_features 必须是可实现的功能点，不要超过 5 条。
+- iteration_directions 是后续版本路线图，不要和 MVP 功能重复。
+- ai_impact 必须是预估辅助范围，不要做绝对评分，不要声称真实准确率。
 - 不要包含 id、created_at 或 original_text，这些字段由系统生成。`;
 }
 
@@ -102,10 +102,11 @@ function toIdeaCard(originalText: string, content: string): IdeaCard {
     summary: asString(parsed.summary, originalText).slice(0, 120),
     tags: normalizeTags(parsed.tags),
     status: normalizeStatus(parsed.status),
-    evaluation: asString(parsed.evaluation, createFallbackEvaluation(originalText)).slice(0, 140),
-    landing_way: asString(parsed.landing_way, createFallbackLandingWay(originalText)).slice(0, 140),
-    expansion_ideas: normalizeExpansionIdeas(parsed.expansion_ideas),
-    action_items: normalizeActionItems(parsed.action_items),
+    mvp_plan: asString(parsed.mvp_plan, createFallbackMvpPlan(originalText)).slice(0, 180),
+    mvp_features: normalizeMvpFeatures(parsed.mvp_features),
+    iteration_directions: normalizeIterationDirections(parsed.iteration_directions),
+    ai_impact: normalizeAiImpact(parsed.ai_impact),
+    action_items: normalizeAiImpact(parsed.ai_impact),
     created_at: new Date().toISOString()
   };
 }
@@ -141,48 +142,62 @@ function normalizeStatus(value: unknown): IdeaStatus {
   return value === "Draft 草案" ? "Draft 草案" : "Spark 闪念";
 }
 
-function normalizeActionItems(value: unknown) {
+function normalizeAiImpact(value: unknown) {
   if (!Array.isArray(value)) {
-    return ["明确目标用户和核心场景", "设计一个可验证的最小原型"];
+    return ["整理成本：预计减少 60%-80%", "决策压力：预计减少 35%-55%", "执行阻力：预计减少 30%-45%"];
   }
 
   const items = value
     .filter((item): item is string => typeof item === "string")
     .map((item) => item.trim())
     .filter(Boolean)
-    .slice(0, 2);
+    .slice(0, 3);
 
   while (items.length < 2) {
-    items.push(items.length === 0 ? "明确目标用户和核心场景" : "设计一个可验证的最小原型");
+    items.push(items.length === 0 ? "整理成本：预计减少 60%-80%" : "决策压力：预计减少 35%-55%");
   }
 
   return items;
 }
 
-function normalizeExpansionIdeas(value: unknown) {
+function normalizeMvpFeatures(value: unknown) {
   if (!Array.isArray(value)) {
-    return ["拆成一个可验证的 MVP", "寻找真实用户访谈", "尝试加入 AI 自动化能力"];
+    return ["灵感输入", "AI 结构化生成", "本地保存", "复制分享"];
   }
 
-  const ideas = value
+  const features = value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+
+  while (features.length < 3) {
+    features.push(features.length === 0 ? "灵感输入" : features.length === 1 ? "AI 结构化生成" : "本地保存");
+  }
+
+  return features;
+}
+
+function normalizeIterationDirections(value: unknown) {
+  if (!Array.isArray(value)) {
+    return ["V1.1：补充模板化流程", "V1.2：加入数据反馈", "V2.0：支持团队协作"];
+  }
+
+  const directions = value
     .filter((item): item is string => typeof item === "string")
     .map((item) => item.trim())
     .filter(Boolean)
     .slice(0, 3);
 
-  while (ideas.length < 2) {
-    ideas.push(ideas.length === 0 ? "拆成一个可验证的 MVP" : "寻找真实用户访谈");
+  while (directions.length < 2) {
+    directions.push(directions.length === 0 ? "V1.1：补充模板化流程" : "V1.2：加入数据反馈");
   }
 
-  return ideas;
+  return directions;
 }
 
-function createFallbackEvaluation(originalText: string) {
-  return `这个灵感有继续探索的价值，核心需要验证的是用户是否愿意为「${originalText.slice(0, 18)}」投入时间或付费。`;
-}
-
-function createFallbackLandingWay(originalText: string) {
-  return `先围绕「${originalText.slice(0, 18)}」做一个单场景 MVP，用 3-5 个用户访谈验证需求强度。`;
+function createFallbackMvpPlan(originalText: string) {
+  return `先围绕「${originalText.slice(0, 18)}」做一个单场景 MVP，只保留输入、AI 处理、结果保存和反馈验证。`;
 }
 
 type DeepSeekChatResponse = {

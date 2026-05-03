@@ -4,7 +4,9 @@
 
 :root {
   color-scheme: dark;
-  --font-pixel: "Courier New", "SimSun", "Songti SC", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-body: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue",
+    Arial, sans-serif;
+  --font-pixel: "Courier New", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 * {
@@ -21,10 +23,10 @@ body {
   margin: 0;
   background: #020302;
   color: #f7f3dd;
-  font-family: var(--font-pixel);
+  font-family: var(--font-body);
   letter-spacing: 0;
-  -webkit-font-smoothing: none;
-  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 button,
@@ -113,7 +115,7 @@ select {
     transparent 5px
   );
   mix-blend-mode: soft-light;
-  opacity: 0.32;
+  opacity: 0.14;
 }
 
 .floor-grid {
@@ -477,18 +479,18 @@ select {
 
 .idea-grid-compact {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
 }
 
 .compact-card {
-  min-height: 278px;
+  min-height: 238px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   overflow: visible;
-  padding: 14px;
+  padding: 13px;
 }
 
 .compact-card.is-focus {
@@ -510,56 +512,39 @@ select {
 }
 
 .compact-card-title {
-  margin-top: 13px;
+  margin-top: 10px;
   color: #ffffff;
-  font-size: 21px;
+  font-family: var(--font-pixel);
+  font-size: 19px;
   font-weight: 900;
   line-height: 1.22;
 }
 
 .compact-card-summary {
   display: -webkit-box;
-  min-height: 58px;
-  margin-top: 10px;
+  min-height: 45px;
+  margin-top: 8px;
   overflow: hidden;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  color: #cfc6ad;
+  -webkit-line-clamp: 2;
+  color: #ddd5bd;
   font-size: 13px;
-  line-height: 1.55;
-}
-
-.focus-meter {
-  height: 5px;
-  width: 100%;
-  border: 1px solid rgba(255, 217, 90, 0.34);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.focus-meter span {
-  display: block;
-  height: 100%;
-  background:
-    linear-gradient(90deg, #ffd95a, #ff6b5e),
-    #ffd95a;
-  box-shadow: 0 0 12px rgba(255, 217, 90, 0.34);
-}
-
-.focus-meter.is-large {
-  height: 9px;
+  font-weight: 500;
+  line-height: 1.7;
 }
 
 .compact-insight {
   display: grid;
   grid-template-columns: 16px minmax(0, 1fr);
   gap: 7px;
-  margin-top: 13px;
+  margin-top: 12px;
   border-left: 2px solid rgba(255, 217, 90, 0.52);
   background: rgba(255, 217, 90, 0.045);
   padding: 8px;
-  color: #d8d0b6;
+  color: #ded7c0;
   font-size: 12px;
-  line-height: 1.55;
+  font-weight: 500;
+  line-height: 1.6;
 }
 
 .compact-insight svg {
@@ -572,9 +557,9 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 12px;
   border-top: 1px solid rgba(90, 80, 53, 0.82);
-  padding-top: 11px;
+  padding-top: 10px;
 }
 
 .open-hint,
@@ -619,6 +604,8 @@ select {
   border: 1px solid rgba(255, 217, 90, 0.7);
   background: rgba(255, 217, 90, 0.07);
   color: #ffe47a;
+  font-family: var(--font-pixel);
+  font-weight: 700;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.7);
 }
 
@@ -1157,8 +1144,9 @@ select {
 
 .focus-section > p:not(.focus-section-title),
 .focus-console-copy {
-  color: #d8d0b6;
+  color: #e1dac2;
   font-size: 14px;
+  font-weight: 500;
   line-height: 1.8;
 }
 
@@ -1174,6 +1162,7 @@ select {
   padding: 6px 9px;
   color: #f1e6b0;
   font-size: 13px;
+  font-weight: 600;
 }
 
 .focus-action-list {
@@ -1181,6 +1170,7 @@ select {
   gap: 9px;
   color: #efe6ca;
   font-size: 14px;
+  font-weight: 500;
 }
 
 .focus-action-list li {
@@ -1197,23 +1187,6 @@ select {
 .focus-action-list li span {
   color: #ffd95a;
   font-size: 12px;
-}
-
-.focus-score {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin: 10px 0;
-}
-
-.focus-score strong {
-  color: #ffffff;
-  font-size: 44px;
-  line-height: 1;
-}
-
-.focus-score span {
-  color: #9f9988;
 }
 
 .priority-command-grid {
@@ -1268,7 +1241,7 @@ select {
 
 .pet-card {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
+  grid-template-columns: 86px minmax(0, 1fr);
   gap: 13px;
   align-items: center;
   border: 1px solid rgba(255, 217, 90, 0.42);
@@ -1305,78 +1278,152 @@ select {
 
 .pet-sprite {
   position: relative;
-  height: 58px;
-  width: 58px;
-  background: var(--pet-main);
+  height: 70px;
+  width: 70px;
+  isolation: isolate;
   box-shadow:
-    0 0 0 4px #050604,
-    0 0 0 6px var(--pet-accent),
-    0 0 26px color-mix(in srgb, var(--pet-glow) 42%, transparent);
+    inset 0 0 0 2px rgba(255, 255, 255, 0.08),
+    0 0 0 3px #050604,
+    0 0 0 5px color-mix(in srgb, var(--pet-accent) 78%, #ffffff 8%),
+    0 0 28px color-mix(in srgb, var(--pet-glow) 42%, transparent);
   image-rendering: pixelated;
+  transform: translateZ(0);
 }
 
-.pet-sprite::before,
-.pet-sprite::after {
-  content: "";
+.pet-aura,
+.pet-body,
+.pet-face,
+.pet-spark {
   position: absolute;
-  background: var(--pet-accent);
 }
 
-.pet-sprite::before {
-  left: 8px;
-  top: -10px;
-  height: 12px;
-  width: 12px;
-  box-shadow: 30px 0 0 var(--pet-accent);
+.pet-aura {
+  inset: 6px;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, transparent 0 10px, rgba(255, 255, 255, 0.18) 10px 14px, transparent 14px),
+    linear-gradient(0deg, transparent 0 10px, rgba(255, 255, 255, 0.18) 10px 14px, transparent 14px),
+    color-mix(in srgb, var(--pet-glow) 16%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--pet-glow) 36%, transparent);
 }
 
-.pet-sprite::after {
-  bottom: -8px;
-  left: 14px;
-  height: 8px;
-  width: 10px;
-  box-shadow: 20px 0 0 var(--pet-accent);
+.pet-body {
+  left: 12px;
+  top: 13px;
+  height: 44px;
+  width: 46px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0 9px, transparent 10px),
+    var(--pet-main);
+  box-shadow:
+    inset -6px -7px 0 color-mix(in srgb, var(--pet-main) 70%, #000000 30%),
+    inset 6px 5px 0 color-mix(in srgb, var(--pet-accent) 32%, transparent),
+    0 8px 0 rgba(0, 0, 0, 0.34);
 }
 
-.pet-eye {
+.pet-face {
+  inset: 0;
+}
+
+.pet-eye,
+.pet-mouth {
   position: absolute;
-  top: 21px;
-  height: 8px;
-  width: 8px;
+  z-index: 2;
   background: #050604;
 }
 
+.pet-eye {
+  top: 30px;
+  height: 7px;
+  width: 7px;
+  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.22);
+}
+
 .pet-eye-left {
-  left: 15px;
+  left: 25px;
 }
 
 .pet-eye-right {
-  right: 15px;
+  right: 25px;
 }
 
-.pet-core {
-  position: absolute;
-  left: 24px;
-  top: 36px;
-  height: 6px;
-  width: 10px;
+.pet-mouth {
+  left: 31px;
+  top: 43px;
+  height: 4px;
+  width: 8px;
   background: var(--pet-accent);
 }
 
-.pet-sprite-cube {
-  border-radius: 0;
+.pet-spark {
+  height: 7px;
+  width: 7px;
+  background: var(--pet-accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--pet-accent) 70%, transparent);
 }
 
-.pet-sprite-spark {
-  clip-path: polygon(50% 0, 65% 28%, 100% 34%, 72% 55%, 82% 100%, 50% 76%, 18% 100%, 28% 55%, 0 34%, 35% 28%);
+.pet-spark-one {
+  right: 6px;
+  top: 10px;
 }
 
-.pet-sprite-moon {
-  border-radius: 50%;
+.pet-spark-two {
+  bottom: 8px;
+  left: 8px;
+  height: 5px;
+  width: 5px;
 }
 
-.pet-sprite-seed {
-  border-radius: 18px 18px 8px 8px;
+.pet-sprite-nova .pet-body {
+  clip-path: polygon(50% 0, 61% 22%, 86% 18%, 76% 44%, 100% 58%, 72% 64%, 70% 96%, 50% 76%, 30% 96%, 28% 64%, 0 58%, 24% 44%, 14% 18%, 39% 22%);
+}
+
+.pet-sprite-blob .pet-body {
+  border-radius: 18px 18px 12px 12px;
+}
+
+.pet-sprite-crystal .pet-body {
+  clip-path: polygon(50% 0, 90% 22%, 80% 86%, 50% 100%, 20% 86%, 10% 22%);
+}
+
+.pet-sprite-bot .pet-body {
+  top: 18px;
+  height: 38px;
+  clip-path: polygon(0 9px, 9px 9px, 9px 0, 37px 0, 37px 9px, 46px 9px, 46px 100%, 0 100%);
+}
+
+.pet-sprite-sprout .pet-body {
+  top: 19px;
+  height: 39px;
+  border-radius: 20px 20px 8px 8px;
+}
+
+.pet-sprite-sprout .pet-body::before,
+.pet-sprite-sprout .pet-body::after {
+  content: "";
+  position: absolute;
+  top: -13px;
+  height: 18px;
+  width: 16px;
+  background: var(--pet-accent);
+}
+
+.pet-sprite-sprout .pet-body::before {
+  left: 15px;
+  clip-path: polygon(100% 0, 100% 100%, 0 55%);
+}
+
+.pet-sprite-sprout .pet-body::after {
+  right: 15px;
+  clip-path: polygon(0 0, 100% 55%, 0 100%);
+}
+
+.pet-sprite-comet .pet-body {
+  clip-path: polygon(26% 6%, 88% 6%, 100% 30%, 76% 94%, 18% 94%, 0 54%);
+}
+
+.pet-sprite-comet .pet-aura {
+  clip-path: polygon(0 20%, 76% 0, 100% 50%, 76% 100%, 0 80%, 22% 50%);
 }
 
 .reward-panel {
@@ -1395,8 +1442,8 @@ select {
 }
 
 .reward-panel .pet-sprite {
-  margin: 20px 0;
-  transform: scale(1.3);
+  margin: 22px 0;
+  transform: scale(1.22);
 }
 
 .reward-panel h2 {
@@ -1751,6 +1798,6 @@ select {
   }
 
   .pet-card {
-    grid-template-columns: 68px minmax(0, 1fr);
+    grid-template-columns: 82px minmax(0, 1fr);
   }
 }
